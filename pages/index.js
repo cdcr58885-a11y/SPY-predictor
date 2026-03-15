@@ -189,7 +189,7 @@ export default function Home() {
 
   const m = data?.market;
   const p = data?.prediction;
-  const fmtPrice = v => v != null ? (ticker === "SPX" ? v.toLocaleString() : "$" + v.toFixed(2)) : "—";
+  const fmtPrice = v => v != null ? (ticker === "SPX" ? v.toFixed(2) : "$" + v.toFixed(2)) : "—";
   const fmtVol = v => v ? (v / 1e6).toFixed(1) + "M" : "—";
 
   return (
