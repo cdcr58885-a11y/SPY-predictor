@@ -281,7 +281,9 @@ export default function Home() {
                   <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", marginTop: 22, borderTop: "1px solid #1a3d22", paddingTop: 16 }}>
                     <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 5, borderRight: "1px solid #1a3d22" }}>
                       <span style={{ fontFamily: JB, fontSize: 10.5, letterSpacing: ".15em", color: "#166534" }}>TARGET RANGE</span>
-                      <span style={{ fontFamily: JB, fontSize: 15, color: "#db2777", textAlign: "center" }}>${p.targetLow?.toFixed(2)} – ${p.targetHigh?.toFixed(2)}</span>
+                      <span style={{ fontFamily: JB, fontSize: 15, color: "#db2777", textAlign: "center" }}>
+                        {ticker === "SPX" ? "" : "$"}{p.targetLow?.toFixed(2)} – {ticker === "SPX" ? "" : "$"}{p.targetHigh?.toFixed(2)}
+                      </span>
                     </div>
                     <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 5 }}>
                       <span style={{ fontFamily: JB, fontSize: 10.5, letterSpacing: ".15em", color: "#166534" }}>EXPECTED MOVE</span>
