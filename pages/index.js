@@ -167,6 +167,16 @@ export default function Home() {
   const [error, setError] = useState("");
   const [step, setStep] = useState("LOADING DATA...");
 
+  // Compass state
+  const [compassRaw, setCompassRaw] = useState(() => {
+    try { return localStorage.getItem("compass_raw") || ""; } catch { return ""; }
+  });
+  const [compassResult, setCompassResult] = useState(() => {
+    try { const s = localStorage.getItem("compass_result"); return s ? JSON.parse(s) : null; } catch { return null; }
+  });
+  const [compassLoading, setCompassLoading] = useState(false);
+  const [showCompassInput, setShowCompassInput] = useState(false);
+
   const load = useCallback(async (force = false, t = null) => {
     const activeTicker = t || ticker;
     setLoading(true); setError("");
@@ -183,9 +193,37 @@ export default function Home() {
     finally { setLoading(false); setStep(""); }
   }, [ticker]);
 
+  const analyzeCompass = async () => {
+    if (!compassRaw.trim()) return;
+    setCompassLoading(true);
+    try {
+      const currentPrice = data?.market?.price || 0;
+      const res = await fetch("/api/compass", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ raw: compassRaw, currentPrice, ticker }),
+      });
+      const json = await res.json();
+      if (json.error) throw new Error(json.error);
+      setCompassResult(json);
+      try { localStorage.setItem("compass_result", JSON.stringify(json)); localStorage.setItem("compass_raw", compassRaw); } catch {}
+      setShowCompassInput(false);
+    } catch (e) { alert("Analysis failed: " + e.message); }
+    finally { setCompassLoading(false); }
+  };
+
   useEffect(() => { load(); }, [load]);
 
   const switchTicker = (t) => { setTicker(t); setData(null); load(false, t); };
+
+  const [searchInput, setSearchInput] = useState("");
+  const handleSearch = (e) => {
+    if (e.key === "Enter" && searchInput.trim()) {
+      const t = searchInput.trim().toUpperCase();
+      setSearchInput("");
+      switchTicker(t);
+    }
+  };
 
   const m = data?.market;
   const p = data?.prediction;
@@ -202,8 +240,8 @@ export default function Home() {
       <div style={{ background: "#080d0a", minHeight: "100vh", fontFamily: RJ, display: "flex", justifyContent: "center", padding: 16 }}>
         <div style={{ width: "100%", maxWidth: 480, display: "flex", flexDirection: "column", gap: 11 }}>
 
-          {/* TOGGLE — SPX first */}
-          <div style={{ ...card, padding: 5, display: "grid", gridTemplateColumns: "1fr 1fr", gap: 4 }}>
+          {/* TOGGLE + SEARCH */}
+          <div style={{ ...card, padding: 5, display: "grid", gridTemplateColumns: "1fr 1fr 1.4fr", gap: 4 }}>
             {[["SPX", "INDEX"], ["SPY", "ETF"]].map(([t, sub]) => (
               <button key={t} onClick={() => switchTicker(t)} style={{
                 padding: "10px 0", border: "none", borderRadius: 10, cursor: "pointer",
@@ -215,6 +253,28 @@ export default function Home() {
                 {t} <span style={{ fontSize: 9, opacity: .6 }}>{sub}</span>
               </button>
             ))}
+            {/* Search box */}
+            <div style={{ position: "relative", display: "flex", alignItems: "center" }}>
+              <span style={{ position: "absolute", left: 10, fontFamily: JB, fontSize: 12, color: "#1a5c2a", pointerEvents: "none" }}>🔍</span>
+              <input
+                value={searchInput}
+                onChange={e => setSearchInput(e.target.value.toUpperCase())}
+                onKeyDown={handleSearch}
+                placeholder="NVDA..."
+                maxLength={6}
+                style={{
+                  width: "100%", padding: "10px 10px 10px 28px",
+                  background: ticker !== "SPX" && ticker !== "SPY" ? "#052e16" : "transparent",
+                  border: "none", borderRadius: 10, outline: "none",
+                  fontFamily: JB, fontSize: 13, fontWeight: 700, letterSpacing: ".12em",
+                  color: ticker !== "SPX" && ticker !== "SPY" ? "#4ade80" : "#1a5c2a",
+                  boxShadow: ticker !== "SPX" && ticker !== "SPY" ? "0 0 12px rgba(34,197,94,0.2)" : "none",
+                }}
+              />
+              {ticker !== "SPX" && ticker !== "SPY" && (
+                <span style={{ position: "absolute", right: 10, fontFamily: JB, fontSize: 11, color: "#4ade80", pointerEvents: "none" }}>{ticker}</span>
+              )}
+            </div>
           </div>
 
           {/* TOP CARD */}
@@ -246,14 +306,16 @@ export default function Home() {
           </div>
 
           {/* TABS */}
-          <div style={{ ...card, padding: 5, display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: 4 }}>
-            {["Prediction", "Signals", "Macro", "Sentiment"].map(t => (
+          <div style={{ ...card, padding: 5, display: "grid", gridTemplateColumns: "repeat(5,1fr)", gap: 4 }}>
+            {["Prediction", "Signals", "Macro", "Sentiment", "Compass"].map(t => (
               <button key={t} onClick={() => setTab(t)} style={{
                 padding: "9px 0", border: "none", borderRadius: 12, cursor: "pointer",
-                fontFamily: RJ, fontSize: 15, fontWeight: 600, letterSpacing: ".04em", transition: "all .18s",
+                fontFamily: t === "Compass" ? JB : RJ,
+                fontSize: t === "Compass" ? 12 : 15,
+                fontWeight: 600, letterSpacing: ".04em", transition: "all .18s",
                 background: tab === t ? "#052e16" : "transparent",
                 color: tab === t ? "#4ade80" : "#166534",
-              }}>{t}</button>
+              }}>{t === "Compass" ? "🧭" : t}</button>
             ))}
           </div>
 
@@ -335,6 +397,142 @@ export default function Home() {
               )}
             </>
           )}
+
+          {/* COMPASS TAB — always available */}
+          {tab === "Compass" && (
+            <>
+              {/* Input panel */}
+              {(showCompassInput || !compassResult) && (
+                <div style={{ ...card, padding: "20px 18px" }}>
+                  <div style={{ fontFamily: JB, fontSize: 10.5, letterSpacing: ".18em", color: "#166534", marginBottom: 12 }}>PASTE MARKET STRUCTURE DATA</div>
+                  <textarea
+                    value={compassRaw}
+                    onChange={e => setCompassRaw(e.target.value)}
+                    placeholder={"Paste your data here...\n\n| EXPIRATION | VOL TRIGGER | ... |\n|------------|-------------|-----|\n| Mar 16 ..."}
+                    style={{
+                      width: "100%", height: 150, resize: "none", outline: "none",
+                      background: "#080d0a", border: "1px solid #1a3d22",
+                      borderRadius: 10, padding: "12px 14px",
+                      fontFamily: JB, fontSize: 10, color: "#4ade80",
+                      lineHeight: 1.6, letterSpacing: ".03em",
+                    }}
+                  />
+                  <div style={{ display: "flex", gap: 8, marginTop: 10 }}>
+                    {compassResult && (
+                      <button onClick={() => setShowCompassInput(false)} style={{
+                        padding: "8px 16px", background: "transparent", border: "1px solid #1a3d22",
+                        borderRadius: 8, color: "#166534", fontFamily: JB, fontSize: 10, letterSpacing: ".08em", cursor: "pointer",
+                      }}>✕ CANCEL</button>
+                    )}
+                    <button onClick={analyzeCompass} disabled={!compassRaw.trim() || compassLoading} style={{
+                      flex: 1, padding: "10px 0",
+                      background: compassRaw.trim() ? "#052e16" : "#0a0f0b",
+                      border: "1px solid #1a3d22", borderRadius: 8,
+                      color: compassRaw.trim() ? "#4ade80" : "#1a3d22",
+                      fontFamily: JB, fontSize: 11, letterSpacing: ".1em", cursor: "pointer",
+                    }}>
+                      {compassLoading ? "ANALYZING..." : "▶ ANALYZE"}
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* Loading */}
+              {compassLoading && (
+                <div style={{ ...card, padding: "32px 20px", display: "flex", flexDirection: "column", alignItems: "center", gap: 14 }}>
+                  <div style={{ width: 36, height: 36, border: "3px solid #1a3d22", borderTopColor: "#22c55e", borderRadius: "50%", animation: "spin 1s linear infinite" }} />
+                  <div style={{ fontFamily: JB, fontSize: 11, color: "#166534", letterSpacing: ".12em", textAlign: "center", lineHeight: 1.8 }}>
+                    READING MARKET STRUCTURE<br />IDENTIFYING KEY LEVELS...
+                  </div>
+                </div>
+              )}
+
+              {/* Results */}
+              {compassResult && !compassLoading && !showCompassInput && (() => {
+                const cp = data?.market?.price || compassResult.currentPrice || 0;
+                const bc = compassResult.bias === "BULLISH" || compassResult.bias === "LEAN BULLISH" ? "#4ade80"
+                  : compassResult.bias === "BEARISH" || compassResult.bias === "LEAN BEARISH" ? "#f87171" : "#facc15";
+                return (
+                  <>
+                    {/* Bias + Summary */}
+                    <div style={{ ...card, padding: "20px 18px", position: "relative", overflow: "hidden" }}>
+                      <div style={{ position: "absolute", inset: 0, background: `radial-gradient(ellipse 60% 40% at 50% 0%, ${bc}11 0%, transparent 70%)`, pointerEvents: "none" }} />
+                      <div style={{ fontFamily: JB, fontSize: 10.5, letterSpacing: ".18em", color: "#166534", marginBottom: 14 }}>🧭 MARKET COMPASS</div>
+                      <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 14 }}>
+                        <div style={{ fontFamily: RJ, fontSize: 28, fontWeight: 700, color: bc, letterSpacing: ".08em" }}>{compassResult.bias}</div>
+                        <div style={{ flex: 1, height: 1, background: "#1a3d22" }} />
+                        <div style={{ textAlign: "right" }}>
+                          <div style={{ fontFamily: JB, fontSize: 9, color: "#166534", letterSpacing: ".1em" }}>NEAREST EXPIRY</div>
+                          <div style={{ fontFamily: JB, fontSize: 13, color: "#4ade80" }}>{compassResult.nearestExpiry}</div>
+                        </div>
+                      </div>
+                      <div style={{ fontFamily: RJ, fontSize: 13, color: "#86efac", lineHeight: 1.6 }}>{compassResult.summary}</div>
+                    </div>
+
+                    {/* Key Levels */}
+                    <div style={{ ...card, padding: "20px 18px" }}>
+                      <div style={{ fontFamily: JB, fontSize: 10.5, letterSpacing: ".18em", color: "#166534", marginBottom: 14 }}>KEY LEVELS</div>
+                      {compassResult.pivotZones?.sort((a, b) => b.level - a.level).map((z, i) => {
+                        const isAbove = z.level > cp;
+                        const clr = isAbove ? "#f87171" : "#4ade80";
+                        const pct = ((z.level - cp) / cp * 100).toFixed(1);
+                        return (
+                          <div key={i} style={{ display: "flex", alignItems: "center", gap: 10, padding: "9px 0", borderBottom: "1px solid #0d1a10" }}>
+                            <div style={{ width: 6, height: 6, borderRadius: "50%", background: clr, flexShrink: 0, boxShadow: `0 0 6px ${clr}88` }} />
+                            <div style={{ fontFamily: JB, fontSize: 17, color: clr, fontWeight: 600, minWidth: 60 }}>{z.level?.toFixed(0)}</div>
+                            <div style={{ fontFamily: JB, fontSize: 10, color: "#166534" }}>{z.type?.toUpperCase()} · {z.strength?.toUpperCase()}</div>
+                            <div style={{ marginLeft: "auto", fontFamily: JB, fontSize: 11, color: isAbove ? "#f87171" : "#4ade80" }}>{isAbove ? "+" : ""}{pct}%</div>
+                          </div>
+                        );
+                      })}
+                      {/* Current price */}
+                      <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "9px 0", background: "#0a140a", margin: "4px -18px", paddingLeft: 18, paddingRight: 18 }}>
+                        <div style={{ width: 6, height: 6, borderRadius: "50%", background: "#facc15", flexShrink: 0, boxShadow: "0 0 6px #facc1588" }} />
+                        <div style={{ fontFamily: JB, fontSize: 17, color: "#facc15", fontWeight: 600, minWidth: 60 }}>{cp.toFixed(2)}</div>
+                        <div style={{ fontFamily: JB, fontSize: 10, color: "#facc15", letterSpacing: ".08em" }}>▶ NOW</div>
+                      </div>
+                    </div>
+
+                    {/* Bounce Targets */}
+                    <div style={{ ...card, padding: "20px 18px" }}>
+                      <div style={{ fontFamily: JB, fontSize: 10.5, letterSpacing: ".18em", color: "#166534", marginBottom: 14 }}>BOUNCE TARGETS</div>
+                      <div style={{ display: "flex", gap: 10 }}>
+                        {compassResult.bounceTargets?.map((t, i) => (
+                          <div key={i} style={{ flex: 1, background: "#080d0a", border: "1px solid #1a3d22", borderRadius: 12, padding: "14px 10px", textAlign: "center" }}>
+                            <div style={{ fontFamily: JB, fontSize: 9, color: "#166534", letterSpacing: ".12em", marginBottom: 6 }}>TARGET {i + 1}</div>
+                            <div style={{ fontFamily: JB, fontSize: 24, color: "#4ade80", fontWeight: 600 }}>{t?.toFixed(0)}</div>
+                            <div style={{ fontFamily: JB, fontSize: 10, color: "#4ade80", marginTop: 4 }}>+{((t - cp) / cp * 100).toFixed(1)}%</div>
+                          </div>
+                        ))}
+                        <div style={{ flex: 1, background: "#080d0a", border: "1px solid #1a3d22", borderRadius: 12, padding: "14px 10px", textAlign: "center" }}>
+                          <div style={{ fontFamily: JB, fontSize: 9, color: "#166534", letterSpacing: ".12em", marginBottom: 6 }}>TRIGGER</div>
+                          <div style={{ fontFamily: JB, fontSize: 24, color: "#facc15", fontWeight: 600 }}>{compassResult.trigger?.toFixed(0)}</div>
+                          <div style={{ fontFamily: JB, fontSize: 10, color: "#facc15", marginTop: 4 }}>+{((compassResult.trigger - cp) / cp * 100).toFixed(1)}%</div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Key Dates */}
+                    <div style={{ ...card, padding: "20px 18px" }}>
+                      <div style={{ fontFamily: JB, fontSize: 10.5, letterSpacing: ".18em", color: "#166534", marginBottom: 14 }}>KEY DATES & PIVOTS</div>
+                      {compassResult.keyDates?.map((d, i) => (
+                        <div key={i} style={{ display: "flex", alignItems: "flex-start", gap: 14, padding: "10px 0", borderBottom: i < compassResult.keyDates.length - 1 ? "1px solid #0d1a10" : "none" }}>
+                          <div style={{ fontFamily: JB, fontSize: 13, color: "#db2777", whiteSpace: "nowrap", minWidth: 52 }}>{d.date}</div>
+                          <div style={{ fontFamily: RJ, fontSize: 13, color: "#86efac", lineHeight: 1.4 }}>{d.reason}</div>
+                        </div>
+                      ))}
+                    </div>
+
+                    {/* Update button */}
+                    <button onClick={() => setShowCompassInput(true)} style={{
+                      alignSelf: "center", padding: "10px 28px", marginBottom: 8,
+                      background: "transparent", border: "1px solid #1a3d22",
+                      borderRadius: 10, color: "#166534", fontFamily: JB,
+                      fontSize: 11, letterSpacing: ".1em", cursor: "pointer",
+                    }}>↺ UPDATE DATA</button>
+                  </>
+                );
+              })()}
 
           {/* BOTTOM METRICS */}
           <div style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: 10 }}>
