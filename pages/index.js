@@ -330,7 +330,7 @@ export default function Home() {
           ) : error ? (
             <div style={{ ...card, padding: 20 }}>
               <div style={{ background: "#0a0f0b", border: "1px solid #1a3d22", borderRadius: 12, padding: 16, fontFamily: JB, fontSize: 12, color: "#f87171", lineHeight: 1.7 }}>⚠ {error}</div>
-              <button onClick={() => load(true)} style={{ marginTop: 12, padding: "10px 24px", background: "#052e16", border: "1px solid #1a3d22", borderRadius: 10, color: "#4ade80", fontFamily: JB, fontSize: 12, letterSpacing: ".1em", cursor: "pointer" }}>↺ RETRY</button>
+              <button onClick={() => load(true)} style={{ marginTop: 12, padding: "10px 24px", background: "#052e16", border: "1px solid #1a3d22", borderRadius: 10, color: "#4ade80", fontFamily: JB, fontSize: 12, letterSpacing: ".1em", cursor: "pointer" }}>RETRY</button>
             </div>
           ) : p && (
             <>
@@ -422,7 +422,7 @@ export default function Home() {
                       <button onClick={() => setShowCompassInput(false)} style={{
                         padding: "8px 16px", background: "transparent", border: "1px solid #1a3d22",
                         borderRadius: 8, color: "#166534", fontFamily: JB, fontSize: 10, letterSpacing: ".08em", cursor: "pointer",
-                      }}>✕ CANCEL</button>
+                      }}>CANCEL</button>
                     )}
                     <button onClick={analyzeCompass} disabled={!compassRaw.trim() || compassLoading} style={{
                       flex: 1, padding: "10px 0",
@@ -431,7 +431,7 @@ export default function Home() {
                       color: compassRaw.trim() ? "#4ade80" : "#1a3d22",
                       fontFamily: JB, fontSize: 11, letterSpacing: ".1em", cursor: "pointer",
                     }}>
-                      {compassLoading ? "ANALYZING..." : "▶ ANALYZE"}
+                      {compassLoading ? "ANALYZING..." : "ANALYZE"}
                     </button>
                   </div>
                 </div>
@@ -489,7 +489,7 @@ export default function Home() {
                       <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "9px 0", background: "#0a140a", margin: "4px -18px", paddingLeft: 18, paddingRight: 18 }}>
                         <div style={{ width: 6, height: 6, borderRadius: "50%", background: "#facc15", flexShrink: 0, boxShadow: "0 0 6px #facc1588" }} />
                         <div style={{ fontFamily: JB, fontSize: 17, color: "#facc15", fontWeight: 600, minWidth: 60 }}>{cp.toFixed(2)}</div>
-                        <div style={{ fontFamily: JB, fontSize: 10, color: "#facc15", letterSpacing: ".08em" }}>▶ NOW</div>
+                        <div style={{ fontFamily: JB, fontSize: 10, color: "#facc15", letterSpacing: ".08em" }}>NOW</div>
                       </div>
                     </div>
 
@@ -529,10 +529,12 @@ export default function Home() {
                       background: "transparent", border: "1px solid #1a3d22",
                       borderRadius: 10, color: "#166534", fontFamily: JB,
                       fontSize: 11, letterSpacing: ".1em", cursor: "pointer",
-                    }}>↺ UPDATE DATA</button>
+                    }}>UPDATE DATA</button>
                   </>
                 );
               })()}
+            </>
+          )}
 
           {/* BOTTOM METRICS */}
           <div style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: 10 }}>
@@ -560,7 +562,7 @@ export default function Home() {
             alignSelf: "center", marginBottom: 8, padding: "10px 28px",
             background: "#052e16", border: "1px solid #1a3d22", borderRadius: 10,
             color: "#4ade80", fontFamily: JB, fontSize: 12, letterSpacing: ".1em", cursor: "pointer",
-          }}>↺ REFRESH PREDICTION</button>
+          }}>REFRESH PREDICTION</button>
 
         </div>
       </div>
