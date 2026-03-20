@@ -176,6 +176,7 @@ export default function Home() {
   });
   const [compassLoading, setCompassLoading] = useState(false);
   const [showCompassInput, setShowCompassInput] = useState(false);
+  const [compassTicker, setCompassTicker] = useState("");
 
   const load = useCallback(async (force = false, t = null) => {
     const activeTicker = t || ticker;
@@ -194,19 +195,28 @@ export default function Home() {
   }, [ticker]);
 
   const analyzeCompass = async () => {
-    if (!compassRaw.trim()) return;
+    if (!compassRaw.trim() || !compassTicker.trim()) return;
     setCompassLoading(true);
     try {
-      const currentPrice = data?.market?.price || 0;
+      // Fetch real price for the compass ticker
+      const priceRes = await fetch(`/api/predict?ticker=${compassTicker.trim()}`);
+      const priceData = await priceRes.json();
+      const currentPrice = priceData?.market?.price || 0;
+
       const res = await fetch("/api/compass", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ raw: compassRaw, currentPrice, ticker }),
+        body: JSON.stringify({ raw: compassRaw, currentPrice, ticker: compassTicker.trim() }),
       });
       const json = await res.json();
       if (json.error) throw new Error(json.error);
-      setCompassResult(json);
-      try { localStorage.setItem("compass_result", JSON.stringify(json)); localStorage.setItem("compass_raw", compassRaw); } catch {}
+      const resultWithMeta = { ...json, compassTicker: compassTicker.trim(), currentPrice };
+      setCompassResult(resultWithMeta);
+      try {
+        localStorage.setItem("compass_result", JSON.stringify(resultWithMeta));
+        localStorage.setItem("compass_raw", compassRaw);
+        localStorage.setItem("compass_ticker", compassTicker.trim());
+      } catch {}
       setShowCompassInput(false);
     } catch (e) { alert("Analysis failed: " + e.message); }
     finally { setCompassLoading(false); }
@@ -217,6 +227,21 @@ export default function Home() {
   const switchTicker = (t) => { setTicker(t); setData(null); load(false, t); };
 
   const [searchInput, setSearchInput] = useState("");
+  const [esPrice, setEsPrice] = useState(null);
+
+  // Fetch ES=F price for 24H reference
+  useEffect(() => {
+    const fetchES = async () => {
+      try {
+        const res = await fetch("/api/predict?ticker=ES%3DF");
+        const json = await res.json();
+        if (json?.market?.price) setEsPrice(json.market.price);
+      } catch {}
+    };
+    fetchES();
+    const id = setInterval(fetchES, 5 * 60 * 1000); // refresh every 5 mins
+    return () => clearInterval(id);
+  }, []);
   const handleSearch = (e) => {
     if (e.key === "Enter" && searchInput.trim()) {
       const t = searchInput.trim().toUpperCase();
@@ -250,7 +275,16 @@ export default function Home() {
                 color: ticker === t ? "#4ade80" : "#1a5c2a",
                 boxShadow: ticker === t ? "0 0 12px rgba(34,197,94,0.2)" : "none",
               }}>
-                {t} <span style={{ fontSize: 9, opacity: .6 }}>{sub}</span>
+                {t === "SPX" && esPrice ? (
+                  <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 1 }}>
+                    <span>{t} <span style={{ fontSize: 9, opacity: .6 }}>{sub}</span></span>
+                    <span style={{ fontSize: 9, color: ticker === t ? "#facc15" : "#1a5c2a", letterSpacing: ".05em", fontWeight: 400 }}>
+                      ES {esPrice.toFixed(0)}
+                    </span>
+                  </div>
+                ) : (
+                  <span>{t} <span style={{ fontSize: 9, opacity: .6 }}>{sub}</span></span>
+                )}
               </button>
             ))}
             {/* Search box */}
@@ -405,6 +439,25 @@ export default function Home() {
               {(showCompassInput || !compassResult) && (
                 <div style={{ ...card, padding: "20px 18px" }}>
                   <div style={{ fontFamily: JB, fontSize: 10.5, letterSpacing: ".18em", color: "#166534", marginBottom: 12 }}>PASTE MARKET STRUCTURE DATA</div>
+
+                  {/* Ticker input */}
+                  <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10 }}>
+                    <span style={{ fontFamily: JB, fontSize: 10, color: "#166534", letterSpacing: ".1em", whiteSpace: "nowrap" }}>SYMBOL:</span>
+                    <input
+                      value={compassTicker}
+                      onChange={e => setCompassTicker(e.target.value.toUpperCase())}
+                      placeholder="SPY / SPX / NVDA..."
+                      maxLength={6}
+                      style={{
+                        flex: 1, padding: "8px 12px",
+                        background: "#080d0a", border: "1px solid #1a3d22",
+                        borderRadius: 8, outline: "none",
+                        fontFamily: JB, fontSize: 12, color: "#4ade80",
+                        letterSpacing: ".08em",
+                      }}
+                    />
+                  </div>
+
                   <textarea
                     value={compassRaw}
                     onChange={e => setCompassRaw(e.target.value)}
@@ -424,11 +477,11 @@ export default function Home() {
                         borderRadius: 8, color: "#166534", fontFamily: JB, fontSize: 10, letterSpacing: ".08em", cursor: "pointer",
                       }}>CANCEL</button>
                     )}
-                    <button onClick={analyzeCompass} disabled={!compassRaw.trim() || compassLoading} style={{
+                    <button onClick={analyzeCompass} disabled={!compassRaw.trim() || !compassTicker.trim() || compassLoading} style={{
                       flex: 1, padding: "10px 0",
-                      background: compassRaw.trim() ? "#052e16" : "#0a0f0b",
+                      background: compassRaw.trim() && compassTicker.trim() ? "#052e16" : "#0a0f0b",
                       border: "1px solid #1a3d22", borderRadius: 8,
-                      color: compassRaw.trim() ? "#4ade80" : "#1a3d22",
+                      color: compassRaw.trim() && compassTicker.trim() ? "#4ade80" : "#1a3d22",
                       fontFamily: JB, fontSize: 11, letterSpacing: ".1em", cursor: "pointer",
                     }}>
                       {compassLoading ? "ANALYZING..." : "ANALYZE"}
@@ -449,7 +502,7 @@ export default function Home() {
 
               {/* Results */}
               {compassResult && !compassLoading && !showCompassInput && (() => {
-                const cp = data?.market?.price || compassResult.currentPrice || 0;
+                const cp = compassResult.currentPrice || compassResult.currentPrice || 0;
                 const bc = compassResult.bias === "BULLISH" || compassResult.bias === "LEAN BULLISH" ? "#4ade80"
                   : compassResult.bias === "BEARISH" || compassResult.bias === "LEAN BEARISH" ? "#f87171" : "#facc15";
                 return (
