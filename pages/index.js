@@ -278,8 +278,8 @@ export default function Home() {
                 {t === "SPX" && esPrice ? (
                   <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 1 }}>
                     <span>{t} <span style={{ fontSize: 9, opacity: .6 }}>{sub}</span></span>
-                    <span style={{ fontSize: 11, color: esChange >= 0 ? "#4ade80" : "#db2777", letterSpacing: ".05em", fontWeight: 600 }}>
-                      ES {esPrice.toFixed(0)} <span style={{ fontSize: 9 }}>{esChange >= 0 ? "+" : ""}{esChange.toFixed(1)}</span>
+                    <span style={{ fontSize: 13, color: esChange >= 0 ? "#4ade80" : "#db2777", letterSpacing: ".05em", fontWeight: 600 }}>
+                      ES {esPrice.toFixed(0)}
                     </span>
                   </div>
                 ) : (
@@ -322,13 +322,21 @@ export default function Home() {
             </div>
             {m ? (
               <>
-                <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 10 }}>
-                  <span style={{ fontFamily: JB, fontSize: 44, color: m.change >= 0 ? "#4ade80" : "#db2777", lineHeight: 1 }}>{fmtPrice(m.price)}</span>
-                  <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-                    <span style={{ fontFamily: JB, fontSize: 20, color: m.change >= 0 ? "#4ade80" : "#db2777" }}>{m.change >= 0 ? "+" : ""}{m.change.toFixed(2)}</span>
-                    <span style={{ fontFamily: JB, fontSize: 17, color: m.change >= 0 ? "#4ade80" : "#db2777" }}>({m.changePct >= 0 ? "+" : ""}{m.changePct.toFixed(2)}%)</span>
+                <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10 }}>
+                  <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
+                    <span style={{ fontFamily: JB, fontSize: 38, color: m.change >= 0 ? "#4ade80" : "#db2777", lineHeight: 1 }}>{fmtPrice(m.price)}</span>
+                    <div style={{ display: "flex", gap: 8 }}>
+                      <span style={{ fontFamily: JB, fontSize: 16, color: m.change >= 0 ? "#4ade80" : "#db2777" }}>{m.change >= 0 ? "+" : ""}{m.change.toFixed(2)}</span>
+                      <span style={{ fontFamily: JB, fontSize: 16, color: m.change >= 0 ? "#4ade80" : "#db2777" }}>({m.changePct >= 0 ? "+" : ""}{m.changePct.toFixed(2)}%)</span>
+                    </div>
                   </div>
-                  <div style={{ marginLeft: "auto", overflow: "hidden", borderRadius: 4, flex: 1, maxWidth: 140 }}><Spark prices={m.sparkPrices} change={m.change} /></div>
+                  <div style={{
+                    marginLeft: "auto", flex: 1,
+                    background: m.change >= 0 ? "rgba(74,222,128,0.05)" : "rgba(219,39,119,0.05)",
+                    borderRadius: 8, padding: "4px 4px 0",
+                    border: `1px solid ${m.change >= 0 ? "rgba(74,222,128,0.12)" : "rgba(219,39,119,0.12)"}`,
+                    overflow: "hidden",
+                  }}><Spark prices={m.sparkPrices} change={m.change} /></div>
                 </div>
                 <div style={{ fontFamily: JB, fontSize: 12.5, color: "#4b6a50", letterSpacing: ".04em" }}>
                   O: {m.open} · H: {m.high} · L: {m.low}{m.volume ? ` · V: ${fmtVol(m.volume)}` : ""}
