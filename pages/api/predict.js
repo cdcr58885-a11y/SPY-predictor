@@ -5,7 +5,7 @@ import { getClaudePrediction } from "../../lib/claudeAnalysis";
 // Separate cache for SPY and SPX
 const cache = { SPY: null, SPX: null };
 const cacheTime = { SPY: 0, SPX: 0 };
-const CACHE_TTL = 60 * 60 * 1000; // 1 hour
+const CACHE_TTL = 5 * 60 * 1000; // 5 minutes for real-time feel
 
 export default async function handler(req, res) {
   res.setHeader("Access-Control-Allow-Origin", "*");

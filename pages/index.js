@@ -7,27 +7,27 @@ const RJ = "'Rajdhani', sans-serif";
 
 /* ─── Sparkline ─── */
 function Spark({ prices = [] }) {
-  const W = 110, H = 48;
+  const W = 130, H = 52;
   if (prices.length < 2) return <svg width={W} height={H} />;
   const mn = Math.min(...prices), mx = Math.max(...prices), rng = mx - mn || 1;
   const xs = prices.map((_, i) => (i / (prices.length - 1)) * W);
-  const ys = prices.map(v => H - ((v - mn) / rng) * (H - 8) - 4);
+  const ys = prices.map(v => H - ((v - mn) / rng) * (H - 6) - 3);
   const line = xs.map((x, i) => `${i === 0 ? "M" : "L"}${x},${ys[i]}`).join(" ");
   const area = line + ` L${W},${H} L0,${H} Z`;
-  const isDown = prices[prices.length - 1] < prices[0];
-  const clr = isDown ? "#f87171" : "#4ade80";
+  const isUp = prices[prices.length - 1] >= prices[0];
+  const clr = isUp ? "#4ade80" : "#db2777";
   return (
     <svg width={W} height={H} style={{ display: "block", overflow: "hidden" }}>
       <defs>
         <linearGradient id="sg" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor={clr} stopOpacity=".3" />
+          <stop offset="0%" stopColor={clr} stopOpacity=".25" />
           <stop offset="100%" stopColor={clr} stopOpacity="0" />
         </linearGradient>
         <clipPath id="spark-clip"><rect x="0" y="0" width={W} height={H} /></clipPath>
       </defs>
       <g clipPath="url(#spark-clip)">
         <path d={area} fill="url(#sg)" />
-        <path d={line} fill="none" stroke={clr} strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
+        <path d={line} fill="none" stroke={clr} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
       </g>
     </svg>
   );
@@ -228,18 +228,19 @@ export default function Home() {
 
   const [searchInput, setSearchInput] = useState("");
   const [esPrice, setEsPrice] = useState(null);
+  const [esChange, setEsChange] = useState(0);
 
-  // Fetch ES=F price for 24H reference
+  // Fetch ES=F futures price for 24H reference
   useEffect(() => {
     const fetchES = async () => {
       try {
-        const res = await fetch("/api/predict?ticker=ES%3DF");
+        const res = await fetch("/api/es");
         const json = await res.json();
-        if (json?.market?.price) setEsPrice(json.market.price);
+        if (json?.price) { setEsPrice(json.price); setEsChange(json.change || 0); }
       } catch {}
     };
     fetchES();
-    const id = setInterval(fetchES, 5 * 60 * 1000); // refresh every 5 mins
+    const id = setInterval(fetchES, 3 * 60 * 1000);
     return () => clearInterval(id);
   }, []);
   const handleSearch = (e) => {
@@ -278,7 +279,7 @@ export default function Home() {
                 {t === "SPX" && esPrice ? (
                   <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 1 }}>
                     <span>{t} <span style={{ fontSize: 9, opacity: .6 }}>{sub}</span></span>
-                    <span style={{ fontSize: 9, color: ticker === t ? "#facc15" : "#1a5c2a", letterSpacing: ".05em", fontWeight: 400 }}>
+                    <span style={{ fontSize: 9, color: esChange >= 0 ? "#4ade80" : "#db2777", letterSpacing: ".05em", fontWeight: 400 }}>
                       ES {esPrice.toFixed(0)}
                     </span>
                   </div>
@@ -323,10 +324,10 @@ export default function Home() {
             {m ? (
               <>
                 <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 10 }}>
-                  <span style={{ fontFamily: JB, fontSize: 44, color: "#db2777", lineHeight: 1 }}>{fmtPrice(m.price)}</span>
+                  <span style={{ fontFamily: JB, fontSize: 44, color: m.change >= 0 ? "#4ade80" : "#db2777", lineHeight: 1 }}>{fmtPrice(m.price)}</span>
                   <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-                    <span style={{ fontFamily: JB, fontSize: 20, color: m.change >= 0 ? "#4ade80" : "#f87171" }}>{m.change >= 0 ? "+" : ""}{m.change.toFixed(2)}</span>
-                    <span style={{ fontFamily: JB, fontSize: 17, color: m.change >= 0 ? "#4ade80" : "#f87171" }}>({m.changePct >= 0 ? "+" : ""}{m.changePct.toFixed(2)}%)</span>
+                    <span style={{ fontFamily: JB, fontSize: 20, color: m.change >= 0 ? "#4ade80" : "#db2777" }}>{m.change >= 0 ? "+" : ""}{m.change.toFixed(2)}</span>
+                    <span style={{ fontFamily: JB, fontSize: 17, color: m.change >= 0 ? "#4ade80" : "#db2777" }}>({m.changePct >= 0 ? "+" : ""}{m.changePct.toFixed(2)}%)</span>
                   </div>
                   <div style={{ marginLeft: "auto", overflow: "hidden", borderRadius: 4 }}><Spark prices={m.sparkPrices} /></div>
                 </div>
