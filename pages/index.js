@@ -7,8 +7,8 @@ const RJ = "'Rajdhani', sans-serif";
 
 /* ─── Sparkline ─── */
 function Spark({ prices = [] }) {
-  const W = 130, H = 52;
-  if (prices.length < 2) return <svg width={W} height={H} />;
+  const W = 200, H = 52;
+  if (prices.length < 2) return <svg width="100%" height={H} />;
   const mn = Math.min(...prices), mx = Math.max(...prices), rng = mx - mn || 1;
   const xs = prices.map((_, i) => (i / (prices.length - 1)) * W);
   const ys = prices.map(v => H - ((v - mn) / rng) * (H - 6) - 3);
@@ -17,7 +17,7 @@ function Spark({ prices = [] }) {
   const isUp = prices[prices.length - 1] >= prices[0];
   const clr = isUp ? "#4ade80" : "#db2777";
   return (
-    <svg width={W} height={H} style={{ display: "block", overflow: "hidden" }}>
+    <svg viewBox={`0 0 ${W} ${H}`} width="100%" height={H} preserveAspectRatio="none" style={{ display: "block", overflow: "hidden" }}>
       <defs>
         <linearGradient id="sg" x1="0" y1="0" x2="0" y2="1">
           <stop offset="0%" stopColor={clr} stopOpacity=".25" />
@@ -329,7 +329,7 @@ export default function Home() {
                     <span style={{ fontFamily: JB, fontSize: 20, color: m.change >= 0 ? "#4ade80" : "#db2777" }}>{m.change >= 0 ? "+" : ""}{m.change.toFixed(2)}</span>
                     <span style={{ fontFamily: JB, fontSize: 17, color: m.change >= 0 ? "#4ade80" : "#db2777" }}>({m.changePct >= 0 ? "+" : ""}{m.changePct.toFixed(2)}%)</span>
                   </div>
-                  <div style={{ marginLeft: "auto", overflow: "hidden", borderRadius: 4 }}><Spark prices={m.sparkPrices} /></div>
+                  <div style={{ marginLeft: "auto", overflow: "hidden", borderRadius: 4, flex: 1, maxWidth: 140 }}><Spark prices={m.sparkPrices} /></div>
                 </div>
                 <div style={{ fontFamily: JB, fontSize: 12.5, color: "#4b6a50", letterSpacing: ".04em" }}>
                   O: {m.open} · H: {m.high} · L: {m.low}{m.volume ? ` · V: ${fmtVol(m.volume)}` : ""}
