@@ -6,7 +6,7 @@ const JB = "'JetBrains Mono', monospace";
 const RJ = "'Rajdhani', sans-serif";
 
 /* ─── Sparkline ─── */
-function Spark({ prices = [] }) {
+function Spark({ prices = [], change = 0 }) {
   const W = 200, H = 52;
   if (prices.length < 2) return <svg width="100%" height={H} />;
   const mn = Math.min(...prices), mx = Math.max(...prices), rng = mx - mn || 1;
@@ -14,8 +14,7 @@ function Spark({ prices = [] }) {
   const ys = prices.map(v => H - ((v - mn) / rng) * (H - 6) - 3);
   const line = xs.map((x, i) => `${i === 0 ? "M" : "L"}${x},${ys[i]}`).join(" ");
   const area = line + ` L${W},${H} L0,${H} Z`;
-  const isUp = prices[prices.length - 1] >= prices[0];
-  const clr = isUp ? "#4ade80" : "#db2777";
+  const clr = change >= 0 ? "#4ade80" : "#db2777";
   return (
     <svg viewBox={`0 0 ${W} ${H}`} width="100%" height={H} preserveAspectRatio="none" style={{ display: "block", overflow: "hidden" }}>
       <defs>
@@ -279,8 +278,8 @@ export default function Home() {
                 {t === "SPX" && esPrice ? (
                   <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 1 }}>
                     <span>{t} <span style={{ fontSize: 9, opacity: .6 }}>{sub}</span></span>
-                    <span style={{ fontSize: 9, color: esChange >= 0 ? "#4ade80" : "#db2777", letterSpacing: ".05em", fontWeight: 400 }}>
-                      ES {esPrice.toFixed(0)}
+                    <span style={{ fontSize: 11, color: esChange >= 0 ? "#4ade80" : "#db2777", letterSpacing: ".05em", fontWeight: 600 }}>
+                      ES {esPrice.toFixed(0)} <span style={{ fontSize: 9 }}>{esChange >= 0 ? "+" : ""}{esChange.toFixed(1)}</span>
                     </span>
                   </div>
                 ) : (
@@ -329,7 +328,7 @@ export default function Home() {
                     <span style={{ fontFamily: JB, fontSize: 20, color: m.change >= 0 ? "#4ade80" : "#db2777" }}>{m.change >= 0 ? "+" : ""}{m.change.toFixed(2)}</span>
                     <span style={{ fontFamily: JB, fontSize: 17, color: m.change >= 0 ? "#4ade80" : "#db2777" }}>({m.changePct >= 0 ? "+" : ""}{m.changePct.toFixed(2)}%)</span>
                   </div>
-                  <div style={{ marginLeft: "auto", overflow: "hidden", borderRadius: 4, flex: 1, maxWidth: 140 }}><Spark prices={m.sparkPrices} /></div>
+                  <div style={{ marginLeft: "auto", overflow: "hidden", borderRadius: 4, flex: 1, maxWidth: 140 }}><Spark prices={m.sparkPrices} change={m.change} /></div>
                 </div>
                 <div style={{ fontFamily: JB, fontSize: 12.5, color: "#4b6a50", letterSpacing: ".04em" }}>
                   O: {m.open} · H: {m.high} · L: {m.low}{m.volume ? ` · V: ${fmtVol(m.volume)}` : ""}
