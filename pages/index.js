@@ -731,7 +731,7 @@ export default function Home() {
                   {/* Resistance */}
                   <div style={{ ...card, padding: "16px 18px" }}>
                     <div style={{ fontFamily: JB, fontSize: 10, letterSpacing: ".15em", color: "#f87171", marginBottom: 12 }}>RESISTANCE</div>
-                    {levelsData.resistance.map((r, i) => {
+                    {levelsData.resistance.sort((a, b) => b.level - a.level).map((r, i) => {
                       const pct = ((r.level - levelsData.price) / levelsData.price * 100).toFixed(1);
                       const strClr = r.strength === "STRONG" ? "#f87171" : r.strength === "MODERATE" ? "#fb923c" : "#fca5a5";
                       return (
@@ -751,7 +751,7 @@ export default function Home() {
                     </div>
                     {/* Support */}
                     <div style={{ fontFamily: JB, fontSize: 10, letterSpacing: ".15em", color: "#4ade80", margin: "12px 0 8px" }}>SUPPORT</div>
-                    {levelsData.support.map((s, i) => {
+                    {levelsData.support.sort((a, b) => b.level - a.level).map((s, i) => {
                       const pct = ((s.level - levelsData.price) / levelsData.price * 100).toFixed(1);
                       const strClr = s.strength === "STRONG" ? "#4ade80" : s.strength === "MODERATE" ? "#86efac" : "#bbf7d0";
                       return (
