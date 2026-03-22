@@ -178,6 +178,29 @@ export default function Home() {
   const [compassTicker, setCompassTicker] = useState("");
   const [showStocks, setShowStocks] = useState(false);
 
+  // News and Levels state for individual stocks
+  const [newsData, setNewsData] = useState(null);
+  const [levelsData, setLevelsData] = useState(null);
+  const [newsLoading, setNewsLoading] = useState(false);
+  const [levelsLoading, setLevelsLoading] = useState(false);
+
+  const isIndex = ["SPX", "SPY"].includes(ticker);
+
+  // Load news and levels when switching to a stock
+  useEffect(() => {
+    if (isIndex) return;
+    setNewsData(null);
+    setLevelsData(null);
+    setNewsLoading(true);
+    setLevelsLoading(true);
+    fetch(`/api/news?ticker=${ticker}`)
+      .then(r => r.json()).then(d => setNewsData(d)).catch(() => {})
+      .finally(() => setNewsLoading(false));
+    fetch(`/api/levels?ticker=${ticker}`)
+      .then(r => r.json()).then(d => setLevelsData(d)).catch(() => {})
+      .finally(() => setLevelsLoading(false));
+  }, [ticker, isIndex]);
+
   const load = useCallback(async (force = false, t = null) => {
     const activeTicker = t || ticker;
     setLoading(true); setError("");
@@ -224,7 +247,12 @@ export default function Home() {
 
   useEffect(() => { load(); }, [load]);
 
-  const switchTicker = (t) => { setTicker(t); setData(null); load(false, t); };
+  const switchTicker = (t) => {
+    setTicker(t);
+    setData(null);
+    setTab(["SPX","SPY"].includes(t) ? "Prediction" : "News");
+    load(false, t);
+  };
 
   const [searchInput, setSearchInput] = useState("");
   const [esPrice, setEsPrice] = useState(null);
@@ -391,18 +419,33 @@ export default function Home() {
           </div>
 
           {/* TABS */}
-          <div style={{ ...card, padding: 5, display: "grid", gridTemplateColumns: "repeat(5,1fr)", gap: 4 }}>
-            {["Prediction", "Signals", "Macro", "Sentiment", "Compass"].map(t => (
-              <button key={t} onClick={() => setTab(t)} style={{
-                padding: "9px 0", border: "none", borderRadius: 12, cursor: "pointer",
-                fontFamily: t === "Compass" ? JB : RJ,
-                fontSize: t === "Compass" ? 12 : 15,
-                fontWeight: 600, letterSpacing: ".04em", transition: "all .18s",
-                background: tab === t ? "#052e16" : "transparent",
-                color: tab === t ? "#4ade80" : "#166534",
-              }}>{t === "Compass" ? "🧭" : t}</button>
-            ))}
-          </div>
+          {isIndex ? (
+            <div style={{ ...card, padding: 5, display: "grid", gridTemplateColumns: "repeat(5,1fr)", gap: 4 }}>
+              {["Prediction", "Signals", "Macro", "Sentiment", "Compass"].map(t => (
+                <button key={t} onClick={() => setTab(t)} style={{
+                  padding: "9px 0", border: "none", borderRadius: 12, cursor: "pointer",
+                  fontFamily: t === "Compass" ? JB : RJ,
+                  fontSize: t === "Compass" ? 12 : 15,
+                  fontWeight: 600, letterSpacing: ".04em", transition: "all .18s",
+                  background: tab === t ? "#052e16" : "transparent",
+                  color: tab === t ? "#4ade80" : "#166534",
+                }}>{t === "Compass" ? "🧭" : t}</button>
+              ))}
+            </div>
+          ) : (
+            <div style={{ ...card, padding: 5, display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 4 }}>
+              {["News", "Levels", "Compass"].map(t => (
+                <button key={t} onClick={() => setTab(t)} style={{
+                  padding: "9px 0", border: "none", borderRadius: 12, cursor: "pointer",
+                  fontFamily: t === "Compass" ? JB : RJ,
+                  fontSize: t === "Compass" ? 12 : 15,
+                  fontWeight: 600, letterSpacing: ".04em", transition: "all .18s",
+                  background: tab === t ? "#052e16" : "transparent",
+                  color: tab === t ? "#4ade80" : "#166534",
+                }}>{t === "Compass" ? "🧭" : t}</button>
+              ))}
+            </div>
+          )}
 
           {/* CONTENT */}
           {loading ? (
@@ -638,6 +681,96 @@ export default function Home() {
                 );
               })()}
             </>
+          )}
+
+          {/* NEWS TAB — for individual stocks */}
+          {!isIndex && tab === "News" && (
+            <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+              {newsLoading ? (
+                <div style={{ ...card, padding: "32px 20px", display: "flex", flexDirection: "column", alignItems: "center", gap: 12 }}>
+                  <div style={{ width: 32, height: 32, border: "3px solid #1a3d22", borderTopColor: "#22c55e", borderRadius: "50%", animation: "spin 1s linear infinite" }} />
+                  <div style={{ fontFamily: JB, fontSize: 11, color: "#166534", letterSpacing: ".1em" }}>FETCHING LATEST NEWS...</div>
+                </div>
+              ) : newsData?.news?.length ? (
+                newsData.news.map((n, i) => (
+                  <a key={i} href={n.url} target="_blank" rel="noopener noreferrer" style={{ textDecoration: "none" }}>
+                    <div style={{ ...card, padding: "14px 16px", transition: "border .2s" }}>
+                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
+                        <span style={{ fontFamily: JB, fontSize: 9, color: "#166534", letterSpacing: ".1em" }}>{n.source?.toUpperCase()}</span>
+                        <span style={{ fontFamily: JB, fontSize: 9, color: "#166534" }}>{n.time}</span>
+                      </div>
+                      <div style={{ fontFamily: RJ, fontSize: 14, color: "#86efac", lineHeight: 1.5, marginBottom: 6, fontWeight: 600 }}>{n.headline}</div>
+                      {n.summary && <div style={{ fontFamily: RJ, fontSize: 12, color: "#4b6a50", lineHeight: 1.5 }}>{n.summary}</div>}
+                    </div>
+                  </a>
+                ))
+              ) : (
+                <div style={{ ...card, padding: "32px 20px", textAlign: "center" }}>
+                  <div style={{ fontFamily: JB, fontSize: 11, color: "#166534" }}>NO RECENT NEWS FOR {ticker}</div>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* LEVELS TAB — for individual stocks */}
+          {!isIndex && tab === "Levels" && (
+            <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+              {levelsLoading ? (
+                <div style={{ ...card, padding: "32px 20px", display: "flex", flexDirection: "column", alignItems: "center", gap: 12 }}>
+                  <div style={{ width: 32, height: 32, border: "3px solid #1a3d22", borderTopColor: "#22c55e", borderRadius: "50%", animation: "spin 1s linear infinite" }} />
+                  <div style={{ fontFamily: JB, fontSize: 11, color: "#166534", letterSpacing: ".1em" }}>CALCULATING KEY LEVELS...</div>
+                </div>
+              ) : levelsData?.resistance ? (
+                <>
+                  {/* Summary */}
+                  <div style={{ ...card, padding: "16px 18px" }}>
+                    <div style={{ fontFamily: JB, fontSize: 10, letterSpacing: ".15em", color: "#166534", marginBottom: 8 }}>TECHNICAL OUTLOOK — {ticker}</div>
+                    <div style={{ fontFamily: RJ, fontSize: 13, color: "#86efac", lineHeight: 1.6 }}>{levelsData.summary}</div>
+                  </div>
+
+                  {/* Resistance */}
+                  <div style={{ ...card, padding: "16px 18px" }}>
+                    <div style={{ fontFamily: JB, fontSize: 10, letterSpacing: ".15em", color: "#f87171", marginBottom: 12 }}>RESISTANCE</div>
+                    {levelsData.resistance.map((r, i) => {
+                      const pct = ((r.level - levelsData.price) / levelsData.price * 100).toFixed(1);
+                      const strClr = r.strength === "STRONG" ? "#f87171" : r.strength === "MODERATE" ? "#fb923c" : "#fca5a5";
+                      return (
+                        <div key={i} style={{ display: "flex", alignItems: "center", gap: 10, padding: "9px 0", borderBottom: i < 2 ? "1px solid #0d1a10" : "none" }}>
+                          <div style={{ width: 6, height: 6, borderRadius: "50%", background: strClr, flexShrink: 0, boxShadow: `0 0 5px ${strClr}88` }} />
+                          <div style={{ fontFamily: JB, fontSize: 17, color: strClr, fontWeight: 600, minWidth: 70 }}>{r.level}</div>
+                          <div style={{ fontFamily: JB, fontSize: 10, color: "#166534", flex: 1 }}>{r.note}</div>
+                          <div style={{ fontFamily: JB, fontSize: 11, color: "#f87171" }}>+{pct}%</div>
+                        </div>
+                      );
+                    })}
+                    {/* Current price */}
+                    <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "9px 0", background: "#0a140a", margin: "4px -18px", paddingLeft: 18, paddingRight: 18 }}>
+                      <div style={{ width: 6, height: 6, borderRadius: "50%", background: "#facc15" }} />
+                      <div style={{ fontFamily: JB, fontSize: 17, color: "#facc15", fontWeight: 600 }}>{levelsData.price}</div>
+                      <div style={{ fontFamily: JB, fontSize: 10, color: "#facc15" }}>NOW</div>
+                    </div>
+                    {/* Support */}
+                    <div style={{ fontFamily: JB, fontSize: 10, letterSpacing: ".15em", color: "#4ade80", margin: "12px 0 8px" }}>SUPPORT</div>
+                    {levelsData.support.map((s, i) => {
+                      const pct = ((s.level - levelsData.price) / levelsData.price * 100).toFixed(1);
+                      const strClr = s.strength === "STRONG" ? "#4ade80" : s.strength === "MODERATE" ? "#86efac" : "#bbf7d0";
+                      return (
+                        <div key={i} style={{ display: "flex", alignItems: "center", gap: 10, padding: "9px 0", borderBottom: i < 2 ? "1px solid #0d1a10" : "none" }}>
+                          <div style={{ width: 6, height: 6, borderRadius: "50%", background: strClr, flexShrink: 0, boxShadow: `0 0 5px ${strClr}88` }} />
+                          <div style={{ fontFamily: JB, fontSize: 17, color: strClr, fontWeight: 600, minWidth: 70 }}>{s.level}</div>
+                          <div style={{ fontFamily: JB, fontSize: 10, color: "#166534", flex: 1 }}>{s.note}</div>
+                          <div style={{ fontFamily: JB, fontSize: 11, color: "#4ade80" }}>{pct}%</div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </>
+              ) : (
+                <div style={{ ...card, padding: "32px 20px", textAlign: "center" }}>
+                  <div style={{ fontFamily: JB, fontSize: 11, color: "#166534" }}>UNABLE TO LOAD LEVELS</div>
+                </div>
+              )}
+            </div>
           )}
 
           {/* BOTTOM METRICS */}
