@@ -357,7 +357,9 @@ export default function Home() {
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
               <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                 <span style={{ width: 9, height: 9, background: "#22c55e", borderRadius: "50%", boxShadow: "0 0 7px #22c55e99", display: "inline-block", animation: "blink 2s ease-in-out infinite" }} />
-                <span style={{ fontFamily: JB, fontSize: 13, letterSpacing: ".13em", color: "#4ade80" }}>{ticker} DAILY PREDICTOR</span>
+                <span style={{ fontFamily: JB, fontSize: 13, letterSpacing: ".13em", color: "#4ade80" }}>
+                  {["SPX","SPY"].includes(ticker) ? `${ticker} DAILY PREDICTOR` : ticker}
+                </span>
               </div>
               <Clock />
             </div>

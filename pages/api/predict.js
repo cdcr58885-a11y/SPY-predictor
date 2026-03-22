@@ -2,16 +2,16 @@
 import { getAllMarketData } from "../../lib/marketData";
 import { getClaudePrediction } from "../../lib/claudeAnalysis";
 
-// Separate cache for SPY and SPX
-const cache = { SPY: null, SPX: null };
-const cacheTime = { SPY: 0, SPX: 0 };
+// Dynamic cache per ticker
+const cache = {};
+const cacheTime = {};
 const CACHE_TTL = 5 * 60 * 1000; // 5 minutes for real-time feel
 
 export default async function handler(req, res) {
   res.setHeader("Access-Control-Allow-Origin", "*");
   if (req.method !== "GET") return res.status(405).json({ error: "Method not allowed" });
 
-  const ticker = req.query.ticker === "SPX" ? "SPX" : "SPY";
+  const ticker = (req.query.ticker || "SPX").toUpperCase().trim();
   const force  = req.query.force === "1";
 
   try {
