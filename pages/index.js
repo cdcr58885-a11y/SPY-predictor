@@ -132,7 +132,7 @@ function Clock() {
       <div style={{ fontFamily: JB, fontSize: 13, color: "#166534", letterSpacing: ".04em", whiteSpace: "nowrap" }}>
         {days[t.getDay()]}, {months[t.getMonth()]} {t.getDate()}, {t.getFullYear()}
       </div>
-      <div style={{ fontFamily: JB, fontSize: 20, color: "#db2777", letterSpacing: ".02em", marginTop: 3, whiteSpace: "nowrap" }}>
+      <div style={{ fontFamily: JB, fontSize: 20, color: "#facc15", letterSpacing: ".02em", marginTop: 3, whiteSpace: "nowrap" }}>
         {p(h)}:{p(t.getMinutes())}:{p(t.getSeconds())} {h < 12 ? "AM" : "PM"}
       </div>
     </div>
@@ -176,6 +176,7 @@ export default function Home() {
   const [compassLoading, setCompassLoading] = useState(false);
   const [showCompassInput, setShowCompassInput] = useState(false);
   const [compassTicker, setCompassTicker] = useState("");
+  const [showStocks, setShowStocks] = useState(false);
 
   const load = useCallback(async (force = false, t = null) => {
     const activeTicker = t || ticker;
@@ -265,50 +266,90 @@ export default function Home() {
       <div style={{ background: "#080d0a", minHeight: "100vh", fontFamily: RJ, display: "flex", justifyContent: "center", padding: 16 }}>
         <div style={{ width: "100%", maxWidth: 480, display: "flex", flexDirection: "column", gap: 11 }}>
 
-          {/* TOGGLE + SEARCH */}
-          <div style={{ ...card, padding: 5, display: "grid", gridTemplateColumns: "1fr 1fr 1.4fr", gap: 4 }}>
-            {[["SPX", "INDEX"], ["SPY", "ETF"]].map(([t, sub]) => (
-              <button key={t} onClick={() => switchTicker(t)} style={{
+          {/* TOGGLE + STOCKS DROPDOWN + SEARCH */}
+          <div style={{ ...card, padding: 5 }}>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr auto auto", gap: 4 }}>
+              {/* SPX button with ES */}
+              <button onClick={() => { switchTicker("SPX"); setShowStocks(false); }} style={{
                 padding: "10px 0", border: "none", borderRadius: 10, cursor: "pointer",
                 fontFamily: JB, fontSize: 15, fontWeight: 700, letterSpacing: ".12em", transition: "all .2s",
-                background: ticker === t ? "#052e16" : "transparent",
-                color: ticker === t ? "#4ade80" : "#1a5c2a",
-                boxShadow: ticker === t ? "0 0 12px rgba(34,197,94,0.2)" : "none",
+                background: ticker === "SPX" ? "#052e16" : "transparent",
+                color: ticker === "SPX" ? "#4ade80" : "#1a5c2a",
+                boxShadow: ticker === "SPX" ? "0 0 12px rgba(34,197,94,0.2)" : "none",
               }}>
-                {t === "SPX" && esPrice ? (
+                {esPrice ? (
                   <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 1 }}>
-                    <span>{t} <span style={{ fontSize: 9, opacity: .6 }}>{sub}</span></span>
-                    <span style={{ fontSize: 13, color: esChange >= 0 ? "#4ade80" : "#db2777", letterSpacing: ".05em", fontWeight: 600 }}>
-                      ES {esPrice.toFixed(0)}
-                    </span>
+                    <span>SPX <span style={{ fontSize: 9, opacity: .6 }}>INDEX</span></span>
+                    <span style={{ fontSize: 13, color: esChange >= 0 ? "#4ade80" : "#db2777", fontWeight: 600 }}>ES {esPrice.toFixed(0)}</span>
                   </div>
                 ) : (
-                  <span>{t} <span style={{ fontSize: 9, opacity: .6 }}>{sub}</span></span>
+                  <span>SPX <span style={{ fontSize: 9, opacity: .6 }}>INDEX</span></span>
                 )}
               </button>
-            ))}
-            {/* Search box */}
-            <div style={{ position: "relative", display: "flex", alignItems: "center" }}>
-              <span style={{ position: "absolute", left: 10, fontFamily: JB, fontSize: 12, color: "#1a5c2a", pointerEvents: "none" }}>🔍</span>
-              <input
-                value={searchInput}
-                onChange={e => setSearchInput(e.target.value.toUpperCase())}
-                onKeyDown={handleSearch}
-                placeholder="NVDA..."
-                maxLength={6}
-                style={{
-                  width: "100%", padding: "10px 10px 10px 28px",
-                  background: ticker !== "SPX" && ticker !== "SPY" ? "#052e16" : "transparent",
-                  border: "none", borderRadius: 10, outline: "none",
-                  fontFamily: JB, fontSize: 13, fontWeight: 700, letterSpacing: ".12em",
-                  color: ticker !== "SPX" && ticker !== "SPY" ? "#4ade80" : "#1a5c2a",
-                  boxShadow: ticker !== "SPX" && ticker !== "SPY" ? "0 0 12px rgba(34,197,94,0.2)" : "none",
-                }}
-              />
-              {ticker !== "SPX" && ticker !== "SPY" && (
-                <span style={{ position: "absolute", right: 10, fontFamily: JB, fontSize: 11, color: "#4ade80", pointerEvents: "none" }}>{ticker}</span>
-              )}
+
+              {/* STOCKS dropdown button */}
+              <button onClick={() => setShowStocks(!showStocks)} style={{
+                padding: "10px 12px", border: "none", borderRadius: 10, cursor: "pointer",
+                fontFamily: JB, fontSize: 11, fontWeight: 700, letterSpacing: ".08em", transition: "all .2s",
+                background: ticker !== "SPX" ? "#052e16" : showStocks ? "#0a1f0e" : "transparent",
+                color: ticker !== "SPX" ? "#4ade80" : showStocks ? "#4ade80" : "#1a5c2a",
+                boxShadow: ticker !== "SPX" ? "0 0 12px rgba(34,197,94,0.2)" : "none",
+                display: "flex", alignItems: "center", gap: 5, whiteSpace: "nowrap",
+              }}>
+                {ticker !== "SPX" ? ticker : "STOCKS"}
+                <span style={{ fontSize: 8, transform: showStocks ? "rotate(180deg)" : "none", transition: ".2s", display: "inline-block", color: "#1a5c2a" }}>▼</span>
+              </button>
+
+              {/* Search */}
+              <div style={{ position: "relative", display: "flex", alignItems: "center" }}>
+                <span style={{ position: "absolute", left: 8, fontFamily: JB, fontSize: 11, color: "#1a5c2a", pointerEvents: "none" }}>🔍</span>
+                <input
+                  value={searchInput}
+                  onChange={e => setSearchInput(e.target.value.toUpperCase())}
+                  onKeyDown={handleSearch}
+                  placeholder="NVDA"
+                  maxLength={6}
+                  style={{
+                    width: 72, padding: "10px 8px 10px 24px",
+                    background: "transparent", border: "none", borderRadius: 10, outline: "none",
+                    fontFamily: JB, fontSize: 12, fontWeight: 700, letterSpacing: ".08em", color: "#1a5c2a",
+                  }}
+                />
+              </div>
             </div>
+
+            {/* Stocks dropdown panel */}
+            {showStocks && (
+              <div style={{ marginTop: 8, borderTop: "1px solid #1a3d22", paddingTop: 12, display: "flex", flexDirection: "column", gap: 12 }}>
+                {[
+                  { group: "INDEX",     items: ["SPY","QQQ","DIA","IWM"] },
+                  { group: "MAG 7",     items: ["AAPL","MSFT","NVDA","AMZN","GOOGL","META","TSLA"] },
+                  { group: "SEMIS",     items: ["AMD","AVGO","TSM","QCOM","MU","INTC","AMAT","LRCX","ASML","KLAC","WDC","SNDK"] },
+                  { group: "FINANCE",   items: ["JPM","GS","MS","BAC","BRK.B","V","MA","HOOD"] },
+                  { group: "ENERGY",    items: ["XOM","CVX","OXY","SLB","COP","BE","OKLO"] },
+                  { group: "HEALTH",    items: ["LLY","UNH","JNJ","ABBV","MRK","PFE"] },
+                  { group: "CONSUMER",  items: ["WMT","COST","HD","NKE","SBUX"] },
+                  { group: "EV / AUTO", items: ["RIVN","NIO","F","GM"] },
+                  { group: "CLOUD / AI",items: ["CRM","SNOW","PLTR","AI","DDOG","PATH"] },
+                  { group: "CRYPTO",    items: ["COIN","MSTR","MARA","RIOT","CRCL"] },
+                ].map(group => (
+                  <div key={group.group}>
+                    <div style={{ fontFamily: JB, fontSize: 9, color: "#166534", letterSpacing: ".2em", marginBottom: 7 }}>{group.group}</div>
+                    <div style={{ display: "flex", flexWrap: "wrap", gap: 5 }}>
+                      {group.items.map(t => (
+                        <button key={t} onClick={() => { switchTicker(t); setShowStocks(false); }} style={{
+                          padding: "6px 10px", borderRadius: 8, cursor: "pointer",
+                          border: ticker === t ? "1px solid #4ade80" : "1px solid #1a3d22",
+                          background: ticker === t ? "#052e16" : "transparent",
+                          color: ticker === t ? "#4ade80" : "#166534",
+                          fontFamily: JB, fontSize: 11, fontWeight: 700, letterSpacing: ".06em",
+                        }}>{t}</button>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
 
           {/* TOP CARD */}
