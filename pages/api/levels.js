@@ -29,17 +29,17 @@ export default async function handler(req, res) {
     const S1  = parseFloat((2*PP-prevH).toFixed(2));
     const S2  = parseFloat((PP-rng).toFixed(2));
     const S3  = parseFloat((prevL-2*(prevH-PP)).toFixed(2));
-    // Fibonacci Retracement based on 52-week High/Low
+    // Fibonacci Retracement — from 52W Low (swing low) up to 52W High (swing high), then retracing down
     const high52 = parseFloat(Math.max(...highs.slice(-252)).toFixed(2));
     const low52  = parseFloat(Math.min(...lows.slice(-252)).toFixed(2));
     const fibRange = high52 - low52;
     const fibLevels = [
       { label: "100%",  val: high52,                                              type: "resistance" },
-      { label: "78.6%", val: parseFloat((low52 + 0.786*fibRange).toFixed(2)),    type: "resistance" },
-      { label: "61.8%", val: parseFloat((low52 + 0.618*fibRange).toFixed(2)),    type: "resistance" },
-      { label: "50.0%", val: parseFloat((low52 + 0.500*fibRange).toFixed(2)),    type: "pivot" },
-      { label: "38.2%", val: parseFloat((low52 + 0.382*fibRange).toFixed(2)),    type: "support" },
-      { label: "23.6%", val: parseFloat((low52 + 0.236*fibRange).toFixed(2)),    type: "support" },
+      { label: "78.6%", val: parseFloat((high52 - 0.786*fibRange).toFixed(2)),   type: "resistance" },
+      { label: "61.8%", val: parseFloat((high52 - 0.618*fibRange).toFixed(2)),   type: "resistance" },
+      { label: "50.0%", val: parseFloat((high52 - 0.500*fibRange).toFixed(2)),   type: "pivot" },
+      { label: "38.2%", val: parseFloat((high52 - 0.382*fibRange).toFixed(2)),   type: "support" },
+      { label: "23.6%", val: parseFloat((high52 - 0.236*fibRange).toFixed(2)),   type: "support" },
       { label: "0%",    val: low52,                                               type: "support" },
     ].sort((a,b) => b.val - a.val);
     // Technical indicators
