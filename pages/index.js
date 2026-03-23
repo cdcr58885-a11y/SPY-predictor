@@ -185,7 +185,8 @@ export default function Home() {
   const [newsLoading, setNewsLoading] = useState(false);
   const [levelsLoading, setLevelsLoading] = useState(false);
 
-  const isIndex = ["SPX", "SPY", "NDX"].includes(ticker);
+  const [fromDropdown, setFromDropdown] = useState(false);
+  const isIndex = ticker === "SPX" && !fromDropdown; // prediction UI only for direct SPX button
   const showLevels = true; // All tickers show levels
 
   // Load news and levels when switching ticker
@@ -250,10 +251,11 @@ export default function Home() {
 
   useEffect(() => { load(); }, [load]);
 
-  const switchTicker = (t) => {
+  const switchTicker = (t, fromDrop = false) => {
     setTicker(t);
     setData(null);
-    setTab(["SPX","SPY"].includes(t) ? "Prediction" : "News");
+    setFromDropdown(fromDrop);
+    setTab(t === "SPX" && !fromDrop ? "Prediction" : "News");
     load(false, t);
   };
 
@@ -278,7 +280,7 @@ export default function Home() {
     if (e.key === "Enter" && searchInput.trim()) {
       const t = searchInput.trim().toUpperCase();
       setSearchInput("");
-      switchTicker(t);
+      switchTicker(t, true);
     }
   };
 
@@ -301,7 +303,7 @@ export default function Home() {
           <div style={{ ...card, padding: 5 }}>
             <div style={{ display: "grid", gridTemplateColumns: "1fr auto auto", gap: 4 }}>
               {/* SPX button with ES */}
-              <button onClick={() => { switchTicker("SPX"); setShowStocks(false); }} style={{
+              <button onClick={() => { switchTicker("SPX", false); setShowStocks(false); }} style={{
                 padding: "10px 0", border: "none", borderRadius: 10, cursor: "pointer",
                 fontFamily: JB, fontSize: 15, fontWeight: 700, letterSpacing: ".12em", transition: "all .2s",
                 background: ticker === "SPX" ? "#052e16" : "transparent",
@@ -368,7 +370,7 @@ export default function Home() {
                     <div style={{ fontFamily: JB, fontSize: 9, color: "#166534", letterSpacing: ".2em", marginBottom: 7 }}>{group.group}</div>
                     <div style={{ display: "flex", flexWrap: "wrap", gap: 5 }}>
                       {group.items.map(t => (
-                        <button key={t} onClick={() => { switchTicker(t); setShowStocks(false); }} style={{
+                        <button key={t} onClick={() => { switchTicker(t, true); setShowStocks(false); }} style={{
                           padding: "6px 10px", borderRadius: 8, cursor: "pointer",
                           border: ticker === t ? "1px solid #4ade80" : "1px solid #1a3d22",
                           background: ticker === t ? "#052e16" : "transparent",

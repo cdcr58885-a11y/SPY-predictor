@@ -4,7 +4,7 @@ export default async function handler(req, res) {
   if (req.method !== "GET") return res.status(405).json({ error: "Method not allowed" });
   const ticker = (req.query.ticker || "SPY").toUpperCase().trim();
   try {
-    const symbol = ticker === "SPX" ? "%5EGSPC" : ticker;
+    const symbol = ticker === "SPX" ? "%5EGSPC" : ticker === "NDX" ? "%5EIXIC" : ticker;
     const url = `https://query1.finance.yahoo.com/v8/finance/chart/${symbol}?range=3mo&interval=1d&includePrePost=false`;
     const r = await fetch(url, { headers: { "User-Agent": "Mozilla/5.0", "Accept": "application/json" } });
     if (!r.ok) throw new Error(`Yahoo error: ${r.status}`);
@@ -29,13 +29,16 @@ export default async function handler(req, res) {
     const S1  = parseFloat((2*PP-prevH).toFixed(2));
     const S2  = parseFloat((PP-rng).toFixed(2));
     const S3  = parseFloat((prevL-2*(prevH-PP)).toFixed(2));
-    // Fibonacci Pivots
-    const FR1 = parseFloat((PP+0.382*rng).toFixed(2));
-    const FR2 = parseFloat((PP+0.618*rng).toFixed(2));
-    const FR3 = parseFloat((PP+1.000*rng).toFixed(2));
-    const FS1 = parseFloat((PP-0.382*rng).toFixed(2));
-    const FS2 = parseFloat((PP-0.618*rng).toFixed(2));
-    const FS3 = parseFloat((PP-1.000*rng).toFixed(2));
+    // Traditional Fibonacci Retracement (based on prevH to prevL)
+    const fibLevels = [
+      { label: "100%", val: prevH,                                          type: "resistance" },
+      { label: "78.6%", val: parseFloat((prevL + 0.786*rng).toFixed(2)),   type: "resistance" },
+      { label: "61.8%", val: parseFloat((prevL + 0.618*rng).toFixed(2)),   type: "resistance" },
+      { label: "50.0%", val: parseFloat((prevL + 0.500*rng).toFixed(2)),   type: "pivot" },
+      { label: "38.2%", val: parseFloat((prevL + 0.382*rng).toFixed(2)),   type: "support" },
+      { label: "23.6%", val: parseFloat((prevL + 0.236*rng).toFixed(2)),   type: "support" },
+      { label: "0%",    val: prevL,                                          type: "support" },
+    ].sort((a,b) => b.val - a.val);
     // Technical indicators
     const sma20  = parseFloat((closes.slice(-20).reduce((a,b)=>a+b,0)/20).toFixed(2));
     const sma50  = parseFloat((closes.slice(-50).reduce((a,b)=>a+b,0)/50).toFixed(2));
@@ -79,11 +82,7 @@ Respond ONLY with JSON, no markdown:
       {label:"PP",val:PP,type:"pivot"},
       {label:"S1",val:S1,type:"support"},{label:"S2",val:S2,type:"support"},{label:"S3",val:S3,type:"support"},
     ].sort((a,b)=>b.val-a.val);
-    const fibPivots = [
-      {label:"FR3",val:FR3,type:"resistance"},{label:"FR2",val:FR2,type:"resistance"},{label:"FR1",val:FR1,type:"resistance"},
-      {label:"PP",val:PP,type:"pivot"},
-      {label:"FS1",val:FS1,type:"support"},{label:"FS2",val:FS2,type:"support"},{label:"FS3",val:FS3,type:"support"},
-    ].sort((a,b)=>b.val-a.val);
+    const fibPivots = fibLevels;
     return res.status(200).json({
       ticker, price, prevH, prevL, prevC, pp: PP,
       technical: aiData,
