@@ -841,33 +841,35 @@ export default function Home() {
             </div>
           )}
 
-          {/* BOTTOM METRICS */}
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: 10 }}>
-            {[
-              { label: "VIX", val: m?.vix?.toFixed(2), sub: m ? `${m.vixChg >= 0 ? "+" : ""}${m.vixChg}%` : "—", clr: "#f87171" },
-              { label: "10Y YIELD", val: m?.tnx ? m.tnx.toFixed(2) + "%" : "—", sub: "treasury", clr: "#facc15" },
-              { label: "BRENT", val: m?.brent ? "$" + m.brent.toFixed(2) : "—", sub: m ? `${m.brentChg >= 0 ? "+" : ""}${m.brentChg}%` : "—", clr: "#f87171" },
-              { label: "RSI", val: m?.rsi ?? "—", sub: m?.rsi < 30 ? "oversold" : m?.rsi > 70 ? "overbought" : "neutral", clr: m?.rsi < 30 ? "#4ade80" : m?.rsi > 70 ? "#f87171" : "#facc15" },
-            ].map(({ label, val, sub, clr }) => (
-              <div key={label} style={{ ...card, padding: "13px 8px 11px", display: "flex", flexDirection: "column", alignItems: "center", gap: 3 }}>
-                <span style={{ fontFamily: JB, fontSize: 9.5, letterSpacing: ".13em", color: "#166534", textTransform: "uppercase" }}>{label}</span>
-                <span style={{ fontFamily: JB, fontSize: 20, color: clr, lineHeight: 1.1 }}>{val ?? "—"}</span>
-                <span style={{ fontFamily: JB, fontSize: 10, color: "#166534" }}>{sub}</span>
+          {/* BOTTOM METRICS — only for SPX/SPY */}
+          {isIndex && (
+            <>
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: 10 }}>
+                {[
+                  { label: "VIX", val: m?.vix?.toFixed(2), sub: m ? `${m.vixChg >= 0 ? "+" : ""}${m.vixChg}%` : "—", clr: "#f87171" },
+                  { label: "10Y YIELD", val: m?.tnx ? m.tnx.toFixed(2) + "%" : "—", sub: "treasury", clr: "#facc15" },
+                  { label: "BRENT", val: m?.brent ? "$" + m.brent.toFixed(2) : "—", sub: m ? `${m.brentChg >= 0 ? "+" : ""}${m.brentChg}%` : "—", clr: "#f87171" },
+                  { label: "RSI", val: m?.rsi ?? "—", sub: m?.rsi < 30 ? "oversold" : m?.rsi > 70 ? "overbought" : "neutral", clr: m?.rsi < 30 ? "#4ade80" : m?.rsi > 70 ? "#f87171" : "#facc15" },
+                ].map(({ label, val, sub, clr }) => (
+                  <div key={label} style={{ ...card, padding: "13px 8px 11px", display: "flex", flexDirection: "column", alignItems: "center", gap: 3 }}>
+                    <span style={{ fontFamily: JB, fontSize: 9.5, letterSpacing: ".13em", color: "#166534", textTransform: "uppercase" }}>{label}</span>
+                    <span style={{ fontFamily: JB, fontSize: 20, color: clr, lineHeight: 1.1 }}>{val ?? "—"}</span>
+                    <span style={{ fontFamily: JB, fontSize: 10, color: "#166534" }}>{sub}</span>
+                  </div>
+                ))}
               </div>
-            ))}
-          </div>
-
-          {data?.generatedAt && (
-            <div style={{ fontFamily: JB, fontSize: 10, color: "#166534", textAlign: "center", padding: "4px 0" }}>
-              {data.cached ? "CACHED · " : "LIVE · "}UPDATED {new Date(data.generatedAt).toLocaleTimeString()}
-            </div>
+              {data?.generatedAt && (
+                <div style={{ fontFamily: JB, fontSize: 10, color: "#166534", textAlign: "center", padding: "4px 0" }}>
+                  {data.cached ? "CACHED · " : "LIVE · "}UPDATED {new Date(data.generatedAt).toLocaleTimeString()}
+                </div>
+              )}
+              <button onClick={() => load(true)} style={{
+                alignSelf: "center", marginBottom: 8, padding: "10px 28px",
+                background: "#052e16", border: "1px solid #1a3d22", borderRadius: 10,
+                color: "#4ade80", fontFamily: JB, fontSize: 12, letterSpacing: ".1em", cursor: "pointer",
+              }}>REFRESH PREDICTION</button>
+            </>
           )}
-
-          <button onClick={() => load(true)} style={{
-            alignSelf: "center", marginBottom: 8, padding: "10px 28px",
-            background: "#052e16", border: "1px solid #1a3d22", borderRadius: 10,
-            color: "#4ade80", fontFamily: JB, fontSize: 12, letterSpacing: ".1em", cursor: "pointer",
-          }}>REFRESH PREDICTION</button>
 
         </div>
       </div>
