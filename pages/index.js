@@ -720,52 +720,120 @@ export default function Home() {
                   <div style={{ width: 32, height: 32, border: "3px solid #1a3d22", borderTopColor: "#22c55e", borderRadius: "50%", animation: "spin 1s linear infinite" }} />
                   <div style={{ fontFamily: JB, fontSize: 11, color: "#166534", letterSpacing: ".1em" }}>CALCULATING KEY LEVELS...</div>
                 </div>
-              ) : levelsData?.resistance ? (
-                <>
-                  {/* Summary */}
-                  <div style={{ ...card, padding: "16px 18px" }}>
-                    <div style={{ fontFamily: JB, fontSize: 10, letterSpacing: ".15em", color: "#166534", marginBottom: 8 }}>TECHNICAL OUTLOOK — {ticker}</div>
-                    <div style={{ fontFamily: RJ, fontSize: 13, color: "#86efac", lineHeight: 1.6 }}>{levelsData.summary}</div>
-                  </div>
+              ) : levelsData?.stdPivots ? (() => {
+                const ld = levelsData;
+                const cp = ld.price;
+                const [openSec, setOpenSec] = useState({ tech: true, pp: true, fib: true });
+                const toggle = k => setOpenSec(p => ({ ...p, [k]: !p[k] }));
 
-                  {/* Resistance */}
-                  <div style={{ ...card, padding: "16px 18px" }}>
-                    <div style={{ fontFamily: JB, fontSize: 10, letterSpacing: ".15em", color: "#f87171", marginBottom: 12 }}>RESISTANCE</div>
-                    {levelsData.resistance.sort((a, b) => b.level - a.level).map((r, i) => {
-                      const pct = ((r.level - levelsData.price) / levelsData.price * 100).toFixed(1);
-                      const strClr = r.strength === "STRONG" ? "#f87171" : r.strength === "MODERATE" ? "#fb923c" : "#fca5a5";
-                      return (
-                        <div key={i} style={{ display: "flex", alignItems: "center", gap: 10, padding: "9px 0", borderBottom: i < 2 ? "1px solid #0d1a10" : "none" }}>
-                          <div style={{ width: 6, height: 6, borderRadius: "50%", background: strClr, flexShrink: 0, boxShadow: `0 0 5px ${strClr}88` }} />
-                          <div style={{ fontFamily: JB, fontSize: 17, color: strClr, fontWeight: 600, minWidth: 70 }}>{r.level}</div>
-                          <div style={{ fontFamily: JB, fontSize: 10, color: "#166534", flex: 1 }}>{r.note}</div>
-                          <div style={{ fontFamily: JB, fontSize: 11, color: "#f87171" }}>+{pct}%</div>
-                        </div>
-                      );
-                    })}
-                    {/* Current price */}
-                    <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "9px 0", background: "#0a140a", margin: "4px -18px", paddingLeft: 18, paddingRight: 18 }}>
-                      <div style={{ width: 6, height: 6, borderRadius: "50%", background: "#facc15" }} />
-                      <div style={{ fontFamily: JB, fontSize: 17, color: "#facc15", fontWeight: 600 }}>{levelsData.price}</div>
-                      <div style={{ fontFamily: JB, fontSize: 10, color: "#facc15" }}>NOW</div>
-                    </div>
-                    {/* Support */}
-                    <div style={{ fontFamily: JB, fontSize: 10, letterSpacing: ".15em", color: "#4ade80", margin: "12px 0 8px" }}>SUPPORT</div>
-                    {levelsData.support.sort((a, b) => b.level - a.level).map((s, i) => {
-                      const pct = ((s.level - levelsData.price) / levelsData.price * 100).toFixed(1);
-                      const strClr = s.strength === "STRONG" ? "#4ade80" : s.strength === "MODERATE" ? "#86efac" : "#bbf7d0";
-                      return (
-                        <div key={i} style={{ display: "flex", alignItems: "center", gap: 10, padding: "9px 0", borderBottom: i < 2 ? "1px solid #0d1a10" : "none" }}>
-                          <div style={{ width: 6, height: 6, borderRadius: "50%", background: strClr, flexShrink: 0, boxShadow: `0 0 5px ${strClr}88` }} />
-                          <div style={{ fontFamily: JB, fontSize: 17, color: strClr, fontWeight: 600, minWidth: 70 }}>{s.level}</div>
-                          <div style={{ fontFamily: JB, fontSize: 10, color: "#166534", flex: 1 }}>{s.note}</div>
-                          <div style={{ fontFamily: JB, fontSize: 11, color: "#4ade80" }}>{pct}%</div>
-                        </div>
-                      );
-                    })}
+                const NowLine = () => (
+                  <div style={{ display:"flex", alignItems:"center", gap:10, padding:"8px 0", background:"#0a140a", margin:"2px -18px", paddingLeft:18, paddingRight:18 }}>
+                    <div style={{ width:6, height:6, borderRadius:"50%", background:"#facc15", boxShadow:"0 0 6px #facc1566" }} />
+                    <div style={{ fontFamily:JB, fontSize:10, color:"#facc15", fontWeight:700, minWidth:36 }}>NOW</div>
+                    <div style={{ fontFamily:JB, fontSize:15, color:"#facc15", fontWeight:600 }}>{cp}</div>
                   </div>
-                </>
-              ) : (
+                );
+
+                const PRow = ({ label, val, type, last }) => {
+                  const isAbove = val > cp;
+                  const isPP = type === "pivot";
+                  const clr = isPP ? "#facc15" : isAbove ? "#f87171" : "#4ade80";
+                  const pct = ((val - cp) / cp * 100).toFixed(2);
+                  return (
+                    <div style={{ display:"flex", alignItems:"center", gap:10, padding:"8px 0", borderBottom: last?"none":"1px solid #0d1a10" }}>
+                      <div style={{ width:5, height:5, borderRadius:"50%", background:clr, flexShrink:0 }} />
+                      <div style={{ fontFamily:JB, fontSize:11, color:clr, fontWeight:700, minWidth:36, letterSpacing:".06em" }}>{label}</div>
+                      <div style={{ fontFamily:JB, fontSize:16, color:clr, fontWeight:600, flex:1 }}>{val}</div>
+                      <div style={{ fontFamily:JB, fontSize:11, color: isAbove?"#f87171":isPP?"#facc15":"#4ade80" }}>{isAbove?"+":""}{pct}%</div>
+                    </div>
+                  );
+                };
+
+                const PrevBar = () => (
+                  <div style={{ display:"grid", gridTemplateColumns:"repeat(4,1fr)", gap:6, marginBottom:12 }}>
+                    {[["PP",ld.pp,"#facc15"],["PREV H",ld.prevH,"#f87171"],["PREV L",ld.prevL,"#4ade80"],["PREV C",ld.prevC,"#86efac"]].map(([l,v,c]) => (
+                      <div key={l} style={{ background:"#080d0a", border:"1px solid #1a3d22", borderRadius:8, padding:"7px 4px", textAlign:"center" }}>
+                        <div style={{ fontFamily:JB, fontSize:8, color:"#166534", letterSpacing:".06em", marginBottom:3 }}>{l}</div>
+                        <div style={{ fontFamily:JB, fontSize:12, color:c, fontWeight:600 }}>{v}</div>
+                      </div>
+                    ))}
+                  </div>
+                );
+
+                return (
+                  <div style={{ ...card, overflow:"hidden" }}>
+
+                    {/* TECHNICAL ANALYSIS */}
+                    <button onClick={() => toggle("tech")} style={{ width:"100%", display:"flex", justifyContent:"space-between", alignItems:"center", padding:"13px 18px", background:"transparent", border:"none", cursor:"pointer", borderBottom:"1px solid #1a3d22" }}>
+                      <span style={{ fontFamily:JB, fontSize:9, letterSpacing:".2em", color:"#166534" }}>TECHNICAL ANALYSIS</span>
+                      <span style={{ fontFamily:JB, fontSize:10, color:"#166534", transform: openSec.tech?"rotate(180deg)":"none", transition:".2s", display:"inline-block" }}>▼</span>
+                    </button>
+                    {openSec.tech && ld.technical && (
+                      <div style={{ padding:"0 18px 14px", borderBottom:"1px solid #1a3d22" }}>
+                        <div style={{ fontFamily:RJ, fontSize:13, color:"#86efac", lineHeight:1.6, margin:"12px 0", paddingBottom:12, borderBottom:"1px solid #1a3d22" }}>{ld.technical.summary}</div>
+                        <div style={{ fontFamily:JB, fontSize:9, color:"#f87171", letterSpacing:".15em", marginBottom:8 }}>RESISTANCE</div>
+                        {(ld.technical.resistance||[]).sort((a,b)=>b.level-a.level).map((r,i) => {
+                          const pct = ((r.level-cp)/cp*100).toFixed(2);
+                          const clr = r.strength==="STRONG"?"#f87171":r.strength==="MODERATE"?"#fb923c":"#fca5a5";
+                          return (
+                            <div key={i} style={{ display:"flex", alignItems:"center", gap:10, padding:"9px 0", borderBottom:"1px solid #0d1a10" }}>
+                              <div style={{ width:6, height:6, borderRadius:"50%", background:clr, flexShrink:0, boxShadow:`0 0 5px ${clr}88` }} />
+                              <div style={{ fontFamily:JB, fontSize:16, color:clr, fontWeight:600, flex:1 }}>{r.level}</div>
+                              <div style={{ fontFamily:JB, fontSize:10, color:"#166534", flex:2 }}>{r.note}</div>
+                              <div style={{ fontFamily:JB, fontSize:11, color:"#f87171" }}>+{pct}%</div>
+                            </div>
+                          );
+                        })}
+                        <NowLine />
+                        <div style={{ fontFamily:JB, fontSize:9, color:"#4ade80", letterSpacing:".15em", margin:"10px 0 8px" }}>SUPPORT</div>
+                        {(ld.technical.support||[]).sort((a,b)=>b.level-a.level).map((s,i,arr) => {
+                          const pct = ((s.level-cp)/cp*100).toFixed(2);
+                          const clr = s.strength==="STRONG"?"#4ade80":s.strength==="MODERATE"?"#86efac":"#bbf7d0";
+                          return (
+                            <div key={i} style={{ display:"flex", alignItems:"center", gap:10, padding:"9px 0", borderBottom:i<arr.length-1?"1px solid #0d1a10":"none" }}>
+                              <div style={{ width:6, height:6, borderRadius:"50%", background:clr, flexShrink:0, boxShadow:`0 0 5px ${clr}88` }} />
+                              <div style={{ fontFamily:JB, fontSize:16, color:clr, fontWeight:600, flex:1 }}>{s.level}</div>
+                              <div style={{ fontFamily:JB, fontSize:10, color:"#166534", flex:2 }}>{s.note}</div>
+                              <div style={{ fontFamily:JB, fontSize:11, color:"#4ade80" }}>{pct}%</div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
+
+                    {/* PIVOT POINTS */}
+                    <button onClick={() => toggle("pp")} style={{ width:"100%", display:"flex", justifyContent:"space-between", alignItems:"center", padding:"13px 18px", background:"transparent", border:"none", cursor:"pointer", borderBottom:"1px solid #1a3d22" }}>
+                      <span style={{ fontFamily:JB, fontSize:9, letterSpacing:".2em", color:"#166534" }}>PIVOT POINTS</span>
+                      <span style={{ fontFamily:JB, fontSize:10, color:"#166534", transform: openSec.pp?"rotate(180deg)":"none", transition:".2s", display:"inline-block" }}>▼</span>
+                    </button>
+                    {openSec.pp && (
+                      <div style={{ padding:"14px 18px", borderBottom:"1px solid #1a3d22" }}>
+                        <PrevBar />
+                        {ld.stdPivots.map((l,i) => {
+                          const showNow = i > 0 && ld.stdPivots[i-1].val > cp && l.val <= cp;
+                          return <div key={i}>{showNow && <NowLine />}<PRow {...l} last={i===ld.stdPivots.length-1} /></div>;
+                        })}
+                      </div>
+                    )}
+
+                    {/* FIBONACCI */}
+                    <button onClick={() => toggle("fib")} style={{ width:"100%", display:"flex", justifyContent:"space-between", alignItems:"center", padding:"13px 18px", background:"transparent", border:"none", cursor:"pointer", borderBottom: openSec.fib?"1px solid #1a3d22":"none" }}>
+                      <span style={{ fontFamily:JB, fontSize:9, letterSpacing:".2em", color:"#166534" }}>FIBONACCI PIVOTS</span>
+                      <span style={{ fontFamily:JB, fontSize:10, color:"#166534", transform: openSec.fib?"rotate(180deg)":"none", transition:".2s", display:"inline-block" }}>▼</span>
+                    </button>
+                    {openSec.fib && (
+                      <div style={{ padding:"14px 18px" }}>
+                        <PrevBar />
+                        {ld.fibPivots.map((l,i) => {
+                          const showNow = i > 0 && ld.fibPivots[i-1].val > cp && l.val <= cp;
+                          return <div key={i}>{showNow && <NowLine />}<PRow {...l} last={i===ld.fibPivots.length-1} /></div>;
+                        })}
+                      </div>
+                    )}
+
+                  </div>
+                );
+              })() : (
                 <div style={{ ...card, padding: "32px 20px", textAlign: "center" }}>
                   <div style={{ fontFamily: JB, fontSize: 11, color: "#166534" }}>UNABLE TO LOAD LEVELS</div>
                 </div>
