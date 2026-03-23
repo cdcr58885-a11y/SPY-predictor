@@ -176,6 +176,7 @@ export default function Home() {
   const [compassLoading, setCompassLoading] = useState(false);
   const [showCompassInput, setShowCompassInput] = useState(false);
   const [compassTicker, setCompassTicker] = useState("");
+  const [openSec, setOpenSec] = useState({ tech: true, pp: true, fib: true });
   const [showStocks, setShowStocks] = useState(false);
 
   // News and Levels state for individual stocks
@@ -723,7 +724,6 @@ export default function Home() {
               ) : levelsData?.stdPivots ? (() => {
                 const ld = levelsData;
                 const cp = ld.price;
-                const [openSec, setOpenSec] = useState({ tech: true, pp: true, fib: true });
                 const toggle = k => setOpenSec(p => ({ ...p, [k]: !p[k] }));
 
                 const NowLine = () => (
