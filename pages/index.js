@@ -5,6 +5,56 @@ import Head from "next/head";
 const JB = "'JetBrains Mono', monospace";
 const RJ = "'Rajdhani', sans-serif";
 
+/* ─── Translations ─── */
+const LANG = {
+  en: {
+    predictor: "DAILY PREDICTOR",
+    tabs: { Prediction:"Prediction", Signals:"Signals", Macro:"Macro", Sentiment:"Sentiment", Levels:"Levels", News:"News", Flow:"Flow" },
+    nextForecast: "{t.nextForecast}",
+    targetRange: "TARGET RANGE",
+    expectedMove: "EXPECTED MOVE",
+    technicalSignals: "TECHNICAL SIGNALS",
+    macroEnv: "MACRO ENVIRONMENT",
+    marketSentiment: "MARKET SENTIMENT",
+    vix: "VIX", yield: "10Y YIELD", brent: "BRENT", rsi: "RSI",
+    treasury: "treasury", oversold: "oversold", overbought: "overbought", neutral: "neutral",
+    refresh: {t.refresh}, retry: {t.retry},
+    cached: "CACHED", live: "LIVE", updated: "UPDATED",
+    loading: "FETCHING REAL MARKET DATA", aiAnalysis: "AI ANALYSIS",
+    technicalAnalysis: "TECHNICAL ANALYSIS", pivotPoints: "PIVOT POINTS", fibonacci: "FIBONACCI RETRACEMENT",
+    smartMoney: "SMART MONEY", intradayVol: "INTRADAY VOLUME", conclusion: "CONCLUSION",
+    nextEarnings: "NEXT EARNINGS", untilReport: "UNTIL REPORT",
+    noNews: "NO RECENT NEWS",
+    economicCalendar: "ECONOMIC CALENDAR", fedWatch: "FED WATCH — RATE PROBABILITIES",
+    sectorRotation: "SECTOR ROTATION", todayPerf: "TODAY'S PERFORMANCE",
+    currentRate: "Current Rate",
+    stocks: "STOCKS", searchPlaceholder: "NVDA",
+  },
+  cn: {
+    predictor: "每日预测",
+    tabs: { Prediction:"预测", Signals:"信号", Macro:"宏观", Sentiment:"情绪", Levels:"点位", News:"新闻", Flow:"资金" },
+    nextForecast: "下一交易日预测",
+    targetRange: "目标区间",
+    expectedMove: "预期波动",
+    technicalSignals: "技术信号",
+    macroEnv: "宏观环境",
+    marketSentiment: "市场情绪",
+    vix: "恐慌指数", yield: "10年期国债", brent: "布伦特油", rsi: "RSI",
+    treasury: "国债", oversold: "超卖", overbought: "超买", neutral: "中性",
+    refresh: "刷新预测", retry: "重试",
+    cached: "缓存", live: "实时", updated: "更新于",
+    loading: "获取市场数据", aiAnalysis: "AI分析",
+    technicalAnalysis: "技术分析", pivotPoints: "枢轴点位", fibonacci: "斐波那契回撤",
+    smartMoney: "主力资金", intradayVol: "日内成交量", conclusion: "结论",
+    nextEarnings: "下次财报", untilReport: "天后公布",
+    noNews: "暂无最新新闻",
+    economicCalendar: "经济日历", fedWatch: "美联储观察 — 利率预测",
+    sectorRotation: "板块轮动", todayPerf: "今日表现",
+    currentRate: "当前利率",
+    stocks: "选股", searchPlaceholder: "NVDA",
+  }
+};
+
 /* ─── Sparkline ─── */
 function Spark({ prices = [], change = 0 }) {
   const W = 200, H = 52;
@@ -165,6 +215,8 @@ export default function Home() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [step, setStep] = useState("LOADING DATA...");
+  const [lang, setLang] = useState("en");
+  const t = LANG[lang];
 
   // Compass state
   const [compassRaw, setCompassRaw] = useState(() => {
@@ -196,6 +248,9 @@ export default function Home() {
   useEffect(() => {
     setFlowData(null);
   }, [ticker]);
+
+  useEffect(() => {
+    if (tab === "Macro" && !macroData && !macroLoading) {
       setMacroLoading(true);
       fetch("/api/macro")
         .then(r => r.json()).then(d => setMacroData(d)).catch(() => {})
@@ -325,7 +380,7 @@ export default function Home() {
 
           {/* TOGGLE + STOCKS DROPDOWN + SEARCH */}
           <div style={{ ...card, padding: 5 }}>
-            <div style={{ display: "grid", gridTemplateColumns: "1fr auto auto", gap: 4 }}>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr auto auto auto", gap: 4 }}>
               {/* SPX button with ES */}
               <button onClick={() => { switchTicker("SPX", false); setShowStocks(false); }} style={{
                 padding: "10px 0", border: "none", borderRadius: 10, cursor: "pointer",
@@ -353,7 +408,7 @@ export default function Home() {
                 boxShadow: ticker !== "SPX" ? "0 0 12px rgba(34,197,94,0.2)" : "none",
                 display: "flex", alignItems: "center", gap: 5, whiteSpace: "nowrap",
               }}>
-                {ticker !== "SPX" ? ticker : "STOCKS"}
+                {ticker !== "SPX" ? ticker : t.stocks}
                 <span style={{ fontSize: 8, transform: showStocks ? "rotate(180deg)" : "none", transition: ".2s", display: "inline-block", color: "#1a5c2a" }}>▼</span>
               </button>
 
@@ -373,6 +428,17 @@ export default function Home() {
                   }}
                 />
               </div>
+
+              {/* Language switcher */}
+              <button onClick={() => setLang(l => l === "en" ? "cn" : "en")} style={{
+                padding: "8px 8px", border: "1px solid #1a3d22", borderRadius: 10,
+                background: "#080d0a", cursor: "pointer",
+                display: "flex", alignItems: "center", gap: 3, whiteSpace: "nowrap",
+              }}>
+                <span style={{ fontFamily: JB, fontSize: 9, color: lang === "en" ? "#4ade80" : "#166534", fontWeight: 700 }}>EN</span>
+                <span style={{ fontFamily: JB, fontSize: 9, color: "#1a3d22" }}>/</span>
+                <span style={{ fontFamily: JB, fontSize: 9, color: lang === "cn" ? "#4ade80" : "#166534", fontWeight: 700 }}>中</span>
+              </button>
             </div>
 
             {/* Stocks dropdown panel */}
@@ -415,7 +481,7 @@ export default function Home() {
               <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                 <span style={{ width: 9, height: 9, background: "#22c55e", borderRadius: "50%", boxShadow: "0 0 7px #22c55e99", display: "inline-block", animation: "blink 2s ease-in-out infinite" }} />
                 <span style={{ fontFamily: JB, fontSize: 13, letterSpacing: ".13em", color: "#4ade80" }}>
-                  {["SPX","SPY"].includes(ticker) ? `${ticker} DAILY PREDICTOR` : ticker}
+                  {["SPX","SPY"].includes(ticker) ? `${ticker} ${t.predictor}` : ticker}
                 </span>
               </div>
               <Clock />
@@ -450,38 +516,38 @@ export default function Home() {
           {/* TABS */}
           {isIndex ? (
             <div style={{ ...card, padding: 5, display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: 4 }}>
-              {["Prediction", "Signals", "Macro", "Sentiment"].map(t => (
-                <button key={t} onClick={() => setTab(t)} style={{
+              {["Prediction", "Signals", "Macro", "Sentiment"].map(tabKey => (
+                <button key={tabKey} onClick={() => setTab(tabKey)} style={{
                   padding: "9px 0", border: "none", borderRadius: 12, cursor: "pointer",
                   fontFamily: RJ, fontSize: 15,
                   fontWeight: 600, letterSpacing: ".04em", transition: "all .18s",
-                  background: tab === t ? "#052e16" : "transparent",
-                  color: tab === t ? "#4ade80" : "#166534",
-                }}>{t}</button>
+                  background: tab === tabKey ? "#052e16" : "transparent",
+                  color: tab === tabKey ? "#4ade80" : "#166534",
+                }}>{t.tabs[tabKey]}</button>
               ))}
             </div>
           ) : fromDropdown && ["SPY","NDX","QQQ","DIA","IWM"].includes(ticker) ? (
             <div style={{ ...card, padding: 5, display: "grid", gridTemplateColumns: "1fr 1fr", gap: 4 }}>
-              {["Flow", "Levels"].map(t => (
-                <button key={t} onClick={() => setTab(t)} style={{
+              {["Flow", "Levels"].map(tabKey => (
+                <button key={tabKey} onClick={() => setTab(tabKey)} style={{
                   padding: "9px 0", border: "none", borderRadius: 12, cursor: "pointer",
                   fontFamily: RJ, fontSize: 15,
                   fontWeight: 600, letterSpacing: ".04em", transition: "all .18s",
-                  background: tab === t ? "#052e16" : "transparent",
-                  color: tab === t ? "#4ade80" : "#166534",
-                }}>{t}</button>
+                  background: tab === tabKey ? "#052e16" : "transparent",
+                  color: tab === tabKey ? "#4ade80" : "#166534",
+                }}>{t.tabs[tabKey]}</button>
               ))}
             </div>
           ) : (
             <div style={{ ...card, padding: 5, display: "grid", gridTemplateColumns: "1fr 1fr", gap: 4 }}>
-              {["News", "Levels"].map(t => (
-                <button key={t} onClick={() => setTab(t)} style={{
+              {["News", "Levels"].map(tabKey => (
+                <button key={tabKey} onClick={() => setTab(tabKey)} style={{
                   padding: "9px 0", border: "none", borderRadius: 12, cursor: "pointer",
                   fontFamily: RJ, fontSize: 15,
                   fontWeight: 600, letterSpacing: ".04em", transition: "all .18s",
-                  background: tab === t ? "#052e16" : "transparent",
-                  color: tab === t ? "#4ade80" : "#166534",
-                }}>{t}</button>
+                  background: tab === tabKey ? "#052e16" : "transparent",
+                  color: tab === tabKey ? "#4ade80" : "#166534",
+                }}>{t.tabs[tabKey]}</button>
               ))}
             </div>
           )}
@@ -504,18 +570,18 @@ export default function Home() {
               {tab === "Prediction" && (
                 <div style={{ ...card, padding: "24px 20px 20px", position: "relative", overflow: "hidden" }}>
                   <div style={{ position: "absolute", inset: 0, background: "radial-gradient(ellipse 70% 55% at 50% 20%,rgba(34,197,94,.07) 0%,transparent 70%)", pointerEvents: "none" }} />
-                  <div style={{ textAlign: "center", fontFamily: JB, fontSize: 11.5, letterSpacing: ".2em", color: "#166534", marginBottom: 16 }}>NEXT SESSION FORECAST</div>
+                  <div style={{ textAlign: "center", fontFamily: JB, fontSize: 11.5, letterSpacing: ".2em", color: "#166534", marginBottom: 16 }}>{t.nextForecast}</div>
                   <NeedleMeter direction={p.direction} confidence={p.confidence} />
                   <div style={{ fontFamily: RJ, fontSize: 13, color: "#86efac", textAlign: "center", padding: "12px 0 0", lineHeight: 1.5 }}>{p.summary}</div>
                   <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", marginTop: 22, borderTop: "1px solid #1a3d22", paddingTop: 16 }}>
                     <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 5, borderRight: "1px solid #1a3d22" }}>
-                      <span style={{ fontFamily: JB, fontSize: 10.5, letterSpacing: ".15em", color: "#166534" }}>TARGET RANGE</span>
+                      <span style={{ fontFamily: JB, fontSize: 10.5, letterSpacing: ".15em", color: "#166534" }}>{ t.targetRange}</span>
                       <span style={{ fontFamily: JB, fontSize: 15, color: "#db2777", textAlign: "center" }}>
                         {ticker === "SPX" ? "" : "$"}{p.targetLow?.toFixed(2)} – {ticker === "SPX" ? "" : "$"}{p.targetHigh?.toFixed(2)}
                       </span>
                     </div>
                     <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 5 }}>
-                      <span style={{ fontFamily: JB, fontSize: 10.5, letterSpacing: ".15em", color: "#166534" }}>EXPECTED MOVE</span>
+                      <span style={{ fontFamily: JB, fontSize: 10.5, letterSpacing: ".15em", color: "#166534" }}>{ t.expectedMove}</span>
                       <span style={{ fontFamily: JB, fontSize: 15, color: "#f87171", textAlign: "center" }}>{p.expectedMoveMin > 0 ? "+" : ""}{p.expectedMoveMin}% to {p.expectedMoveMax > 0 ? "+" : ""}{p.expectedMoveMax}%</span>
                     </div>
                   </div>
@@ -523,7 +589,7 @@ export default function Home() {
               )}
               {tab === "Signals" && (
                 <div style={{ ...card, padding: "24px 20px 20px" }}>
-                  <div style={{ textAlign: "center", fontFamily: JB, fontSize: 11.5, letterSpacing: ".2em", color: "#166534", marginBottom: 20 }}>TECHNICAL SIGNALS</div>
+                  <div style={{ textAlign: "center", fontFamily: JB, fontSize: 11.5, letterSpacing: ".2em", color: "#166534", marginBottom: 20 }}>{ t.technicalSignals}</div>
                   {p.signals?.map((s, i) => (
                     <div key={i} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "10px 4px", borderBottom: i < p.signals.length - 1 ? "1px solid #1a3d22" : "none" }}>
                       <span style={{ fontFamily: JB, fontSize: 12, color: "#4ade80", letterSpacing: ".08em" }}>{s.name}</span>
@@ -545,7 +611,7 @@ export default function Home() {
                       {/* ECONOMIC CALENDAR */}
                       <div style={{ ...card, overflow: "hidden" }}>
                         <button onClick={() => setOpenMacro(p => ({ ...p, cal: !p.cal }))} style={{ width: "100%", display: "flex", justifyContent: "space-between", alignItems: "center", padding: "13px 18px", background: "transparent", border: "none", cursor: "pointer", borderBottom: openMacro.cal ? "1px solid #1a3d22" : "none" }}>
-                          <span style={{ fontFamily: JB, fontSize: 9, letterSpacing: ".2em", color: "#166534" }}>ECONOMIC CALENDAR</span>
+                          <span style={{ fontFamily: JB, fontSize: 9, letterSpacing: ".2em", color: "#166534" }}>{ t.economicCalendar}</span>
                           <span style={{ fontFamily: JB, fontSize: 10, color: "#166534", transform: openMacro.cal ? "rotate(180deg)" : "none", transition: ".2s", display: "inline-block" }}>▼</span>
                         </button>
                         {openMacro.cal && (
@@ -582,7 +648,7 @@ export default function Home() {
                       {/* FED WATCH */}
                       <div style={{ ...card, overflow: "hidden" }}>
                         <button onClick={() => setOpenMacro(p => ({ ...p, fed: !p.fed }))} style={{ width: "100%", display: "flex", justifyContent: "space-between", alignItems: "center", padding: "13px 18px", background: "transparent", border: "none", cursor: "pointer", borderBottom: openMacro.fed ? "1px solid #1a3d22" : "none" }}>
-                          <span style={{ fontFamily: JB, fontSize: 9, letterSpacing: ".2em", color: "#166534" }}>FED WATCH — RATE PROBABILITIES</span>
+                          <span style={{ fontFamily: JB, fontSize: 9, letterSpacing: ".2em", color: "#166534" }}>{ t.fedWatch}</span>
                           <span style={{ fontFamily: JB, fontSize: 10, color: "#166534", transform: openMacro.fed ? "rotate(180deg)" : "none", transition: ".2s", display: "inline-block" }}>▼</span>
                         </button>
                         {openMacro.fed && macroData.fedWatch && (
@@ -622,12 +688,12 @@ export default function Home() {
                       {/* SECTOR ROTATION */}
                       <div style={{ ...card, overflow: "hidden" }}>
                         <button onClick={() => setOpenMacro(p => ({ ...p, sec: !p.sec }))} style={{ width: "100%", display: "flex", justifyContent: "space-between", alignItems: "center", padding: "13px 18px", background: "transparent", border: "none", cursor: "pointer", borderBottom: openMacro.sec ? "1px solid #1a3d22" : "none" }}>
-                          <span style={{ fontFamily: JB, fontSize: 9, letterSpacing: ".2em", color: "#166534" }}>SECTOR ROTATION</span>
+                          <span style={{ fontFamily: JB, fontSize: 9, letterSpacing: ".2em", color: "#166534" }}>{ t.sectorRotation}</span>
                           <span style={{ fontFamily: JB, fontSize: 10, color: "#166534", transform: openMacro.sec ? "rotate(180deg)" : "none", transition: ".2s", display: "inline-block" }}>▼</span>
                         </button>
                         {openMacro.sec && (
                           <div style={{ padding: "14px 18px" }}>
-                            <div style={{ fontFamily: JB, fontSize: 9, color: "#166534", letterSpacing: ".1em", marginBottom: 10 }}>TODAY'S PERFORMANCE</div>
+                            <div style={{ fontFamily: JB, fontSize: 9, color: "#166534", letterSpacing: ".1em", marginBottom: 10 }}>{ t.todayPerf}</div>
                             {(macroData.sectors || []).map((s, i) => {
                               const isUp = s.change >= 0;
                               const clr = isUp ? "#4ade80" : "#f87171";
@@ -660,7 +726,7 @@ export default function Home() {
               )}
               {tab === "Sentiment" && (
                 <div style={{ ...card, padding: "24px 20px 20px" }}>
-                  <div style={{ textAlign: "center", fontFamily: JB, fontSize: 11.5, letterSpacing: ".2em", color: "#166534", marginBottom: 20 }}>MARKET SENTIMENT</div>
+                  <div style={{ textAlign: "center", fontFamily: JB, fontSize: 11.5, letterSpacing: ".2em", color: "#166534", marginBottom: 20 }}>{ t.marketSentiment}</div>
                   {[
                     { label: "BULLISH", pct: p.sentiment?.bullPct, color: "#4ade80" },
                     { label: "BEARISH", pct: p.sentiment?.bearPct, color: "#f87171" },
@@ -853,7 +919,7 @@ export default function Home() {
                     {/* Volume chart */}
                     <div style={{ ...card, padding: "16px 18px" }}>
                       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
-                        <div style={{ fontFamily: JB, fontSize: 9, letterSpacing: ".2em", color: "#166534" }}>INTRADAY VOLUME</div>
+                        <div style={{ fontFamily: JB, fontSize: 9, letterSpacing: ".2em", color: "#166534" }}>{ t.intradayVol}</div>
                         <div style={{ display: "flex", gap: 10 }}>
                           {[["UP","#4ade80"],["DOWN","#db2777"]].map(([l,c]) => (
                             <div key={l} style={{ display: "flex", alignItems: "center", gap: 4 }}>
@@ -897,7 +963,7 @@ export default function Home() {
                         <div style={{ position: "absolute", inset: 0, background: `radial-gradient(ellipse 60% 40% at 50% 0%, ${smClr}0d 0%, transparent 70%)`, pointerEvents: "none" }} />
                         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 14, paddingBottom: 12, borderBottom: "1px solid #1a3d22" }}>
                           <div>
-                            <div style={{ fontFamily: JB, fontSize: 9, color: "#166534", letterSpacing: ".15em", marginBottom: 4 }}>SMART MONEY</div>
+                            <div style={{ fontFamily: JB, fontSize: 9, color: "#166534", letterSpacing: ".15em", marginBottom: 4 }}>{ t.smartMoney}</div>
                             <div style={{ fontFamily: RJ, fontSize: 26, fontWeight: 700, color: smClr }}>{fd.smartMoney}</div>
                           </div>
                           <div style={{ textAlign: "right" }}>
@@ -938,12 +1004,12 @@ export default function Home() {
               {newsData?.nextEarnings && (
                 <div style={{ ...card, padding: "14px 18px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
                   <div>
-                    <div style={{ fontFamily: JB, fontSize: 9, color: "#166534", letterSpacing: ".15em", marginBottom: 4 }}>NEXT EARNINGS</div>
+                    <div style={{ fontFamily: JB, fontSize: 9, color: "#166534", letterSpacing: ".15em", marginBottom: 4 }}>{ t.nextEarnings}</div>
                     <div style={{ fontFamily: JB, fontSize: 16, color: "#facc15", fontWeight: 600 }}>{newsData.nextEarnings.date}</div>
                   </div>
                   <div style={{ textAlign: "right" }}>
                     <div style={{ fontFamily: JB, fontSize: 28, color: "#facc15", fontWeight: 700 }}>{newsData.nextEarnings.daysUntil}d</div>
-                    <div style={{ fontFamily: JB, fontSize: 9, color: "#166534" }}>UNTIL REPORT</div>
+                    <div style={{ fontFamily: JB, fontSize: 9, color: "#166534" }}>{ t.untilReport}</div>
                   </div>
                 </div>
               )}
@@ -1025,7 +1091,7 @@ export default function Home() {
 
                     {/* TECHNICAL ANALYSIS */}
                     <button onClick={() => toggle("tech")} style={{ width:"100%", display:"flex", justifyContent:"space-between", alignItems:"center", padding:"13px 18px", background:"transparent", border:"none", cursor:"pointer", borderBottom:"1px solid #1a3d22" }}>
-                      <span style={{ fontFamily:JB, fontSize:9, letterSpacing:".2em", color:"#166534" }}>TECHNICAL ANALYSIS</span>
+                      <span style={{ fontFamily:JB, fontSize:9, letterSpacing:".2em", color:"#166534" }}>{ t.technicalAnalysis}</span>
                       <span style={{ fontFamily:JB, fontSize:10, color:"#166534", transform: openSec.tech?"rotate(180deg)":"none", transition:".2s", display:"inline-block" }}>▼</span>
                     </button>
                     {openSec.tech && ld.technical && (
@@ -1063,7 +1129,7 @@ export default function Home() {
 
                     {/* PIVOT POINTS */}
                     <button onClick={() => toggle("pp")} style={{ width:"100%", display:"flex", justifyContent:"space-between", alignItems:"center", padding:"13px 18px", background:"transparent", border:"none", cursor:"pointer", borderBottom:"1px solid #1a3d22" }}>
-                      <span style={{ fontFamily:JB, fontSize:9, letterSpacing:".2em", color:"#166534" }}>PIVOT POINTS</span>
+                      <span style={{ fontFamily:JB, fontSize:9, letterSpacing:".2em", color:"#166534" }}>{ t.pivotPoints}</span>
                       <span style={{ fontFamily:JB, fontSize:10, color:"#166534", transform: openSec.pp?"rotate(180deg)":"none", transition:".2s", display:"inline-block" }}>▼</span>
                     </button>
                     {openSec.pp && (
@@ -1078,7 +1144,7 @@ export default function Home() {
 
                     {/* FIBONACCI */}
                     <button onClick={() => toggle("fib")} style={{ width:"100%", display:"flex", justifyContent:"space-between", alignItems:"center", padding:"13px 18px", background:"transparent", border:"none", cursor:"pointer", borderBottom: openSec.fib?"1px solid #1a3d22":"none" }}>
-                      <span style={{ fontFamily:JB, fontSize:9, letterSpacing:".2em", color:"#166534" }}>FIBONACCI RETRACEMENT</span>
+                      <span style={{ fontFamily:JB, fontSize:9, letterSpacing:".2em", color:"#166534" }}>{ t.fibonacci}</span>
                       <span style={{ fontFamily:JB, fontSize:10, color:"#166534", transform: openSec.fib?"rotate(180deg)":"none", transition:".2s", display:"inline-block" }}>▼</span>
                     </button>
                     {openSec.fib && (
@@ -1114,10 +1180,10 @@ export default function Home() {
             <>
               <div style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: 10 }}>
                 {[
-                  { label: "VIX", val: m?.vix?.toFixed(2), sub: m ? `${m.vixChg >= 0 ? "+" : ""}${m.vixChg}%` : "—", clr: "#f87171" },
-                  { label: "10Y YIELD", val: m?.tnx ? m.tnx.toFixed(2) + "%" : "—", sub: "treasury", clr: "#facc15" },
-                  { label: "BRENT", val: m?.brent ? "$" + m.brent.toFixed(2) : "—", sub: m ? `${m.brentChg >= 0 ? "+" : ""}${m.brentChg}%` : "—", clr: "#f87171" },
-                  { label: "RSI", val: m?.rsi ?? "—", sub: m?.rsi < 30 ? "oversold" : m?.rsi > 70 ? "overbought" : "neutral", clr: m?.rsi < 30 ? "#4ade80" : m?.rsi > 70 ? "#f87171" : "#facc15" },
+                  { label: t.vix,   val: m?.vix?.toFixed(2), sub: m ? `${m.vixChg >= 0 ? "+" : ""}${m.vixChg}%` : "—", clr: "#f87171" },
+                  { label: t.yield, val: m?.tnx ? m.tnx.toFixed(2) + "%" : "—", sub: t.treasury, clr: "#facc15" },
+                  { label: t.brent, val: m?.brent ? "$" + m.brent.toFixed(2) : "—", sub: m ? `${m.brentChg >= 0 ? "+" : ""}${m.brentChg}%` : "—", clr: "#f87171" },
+                  { label: t.rsi,   val: m?.rsi ?? "—", sub: m?.rsi < 30 ? t.oversold : m?.rsi > 70 ? t.overbought : t.neutral, clr: m?.rsi < 30 ? "#4ade80" : m?.rsi > 70 ? "#f87171" : "#facc15" },
                 ].map(({ label, val, sub, clr }) => (
                   <div key={label} style={{ ...card, padding: "13px 8px 11px", display: "flex", flexDirection: "column", alignItems: "center", gap: 3 }}>
                     <span style={{ fontFamily: JB, fontSize: 9.5, letterSpacing: ".13em", color: "#166534", textTransform: "uppercase" }}>{label}</span>
@@ -1128,7 +1194,7 @@ export default function Home() {
               </div>
               {data?.generatedAt && (
                 <div style={{ fontFamily: JB, fontSize: 10, color: "#166534", textAlign: "center", padding: "4px 0" }}>
-                  {data.cached ? "CACHED · " : "LIVE · "}UPDATED {new Date(data.generatedAt).toLocaleTimeString()}
+                  {data.cached ? `${t.cached} · ` : `${t.live} · `}${t.updated} {new Date(data.generatedAt).toLocaleTimeString()}
                 </div>
               )}
               <button onClick={() => load(true)} style={{
