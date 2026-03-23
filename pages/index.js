@@ -178,6 +178,30 @@ export default function Home() {
   const [compassTicker, setCompassTicker] = useState("");
   const [openSec, setOpenSec] = useState({ tech: true, pp: true, fib: true });
   const [showStocks, setShowStocks] = useState(false);
+  const [macroData, setMacroData] = useState(null);
+  const [macroLoading, setMacroLoading] = useState(false);
+  const [openMacro, setOpenMacro] = useState({ cal: true, fed: true, sec: true });
+  const [flowData, setFlowData] = useState(null);
+  const [flowLoading, setFlowLoading] = useState(false);
+
+  useEffect(() => {
+    if (tab === "Flow" && !flowData && !flowLoading) {
+      setFlowLoading(true);
+      fetch(`/api/flow?ticker=${ticker}`)
+        .then(r => r.json()).then(d => setFlowData(d)).catch(() => {})
+        .finally(() => setFlowLoading(false));
+    }
+  }, [tab, ticker, flowData, flowLoading]);
+
+  useEffect(() => {
+    setFlowData(null);
+  }, [ticker]);
+      setMacroLoading(true);
+      fetch("/api/macro")
+        .then(r => r.json()).then(d => setMacroData(d)).catch(() => {})
+        .finally(() => setMacroLoading(false));
+    }
+  }, [tab, macroData, macroLoading]);
 
   // News and Levels state for individual stocks
   const [newsData, setNewsData] = useState(null);
@@ -425,29 +449,39 @@ export default function Home() {
 
           {/* TABS */}
           {isIndex ? (
-            <div style={{ ...card, padding: 5, display: "grid", gridTemplateColumns: "repeat(6,1fr)", gap: 4 }}>
-              {["Prediction", "Signals", "Macro", "Sentiment", "Levels", "Compass"].map(t => (
+            <div style={{ ...card, padding: 5, display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: 4 }}>
+              {["Prediction", "Signals", "Macro", "Sentiment"].map(t => (
                 <button key={t} onClick={() => setTab(t)} style={{
                   padding: "9px 0", border: "none", borderRadius: 12, cursor: "pointer",
-                  fontFamily: t === "Compass" ? JB : RJ,
-                  fontSize: t === "Compass" ? 12 : t === "Levels" ? 13 : 15,
+                  fontFamily: RJ, fontSize: 15,
                   fontWeight: 600, letterSpacing: ".04em", transition: "all .18s",
                   background: tab === t ? "#052e16" : "transparent",
                   color: tab === t ? "#4ade80" : "#166534",
-                }}>{t === "Compass" ? "🧭" : t}</button>
+                }}>{t}</button>
+              ))}
+            </div>
+          ) : fromDropdown && ["SPY","NDX","QQQ","DIA","IWM"].includes(ticker) ? (
+            <div style={{ ...card, padding: 5, display: "grid", gridTemplateColumns: "1fr 1fr", gap: 4 }}>
+              {["Flow", "Levels"].map(t => (
+                <button key={t} onClick={() => setTab(t)} style={{
+                  padding: "9px 0", border: "none", borderRadius: 12, cursor: "pointer",
+                  fontFamily: RJ, fontSize: 15,
+                  fontWeight: 600, letterSpacing: ".04em", transition: "all .18s",
+                  background: tab === t ? "#052e16" : "transparent",
+                  color: tab === t ? "#4ade80" : "#166534",
+                }}>{t}</button>
               ))}
             </div>
           ) : (
-            <div style={{ ...card, padding: 5, display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 4 }}>
-              {["News", "Levels", "Compass"].map(t => (
+            <div style={{ ...card, padding: 5, display: "grid", gridTemplateColumns: "1fr 1fr", gap: 4 }}>
+              {["News", "Levels"].map(t => (
                 <button key={t} onClick={() => setTab(t)} style={{
                   padding: "9px 0", border: "none", borderRadius: 12, cursor: "pointer",
-                  fontFamily: t === "Compass" ? JB : RJ,
-                  fontSize: t === "Compass" ? 12 : 15,
+                  fontFamily: RJ, fontSize: 15,
                   fontWeight: 600, letterSpacing: ".04em", transition: "all .18s",
                   background: tab === t ? "#052e16" : "transparent",
                   color: tab === t ? "#4ade80" : "#166534",
-                }}>{t === "Compass" ? "🧭" : t}</button>
+                }}>{t}</button>
               ))}
             </div>
           )}
@@ -500,14 +534,128 @@ export default function Home() {
                 </div>
               )}
               {tab === "Macro" && (
-                <div style={{ ...card, padding: "24px 20px 20px" }}>
-                  <div style={{ textAlign: "center", fontFamily: JB, fontSize: 11.5, letterSpacing: ".2em", color: "#166534", marginBottom: 20 }}>MACRO ENVIRONMENT</div>
-                  {p.macroNotes?.map((n, i) => (
-                    <div key={i} style={{ padding: "10px 4px", borderBottom: i < p.macroNotes.length - 1 ? "1px solid #1a3d22" : "none" }}>
-                      <div style={{ fontFamily: JB, fontSize: 11, color: "#166534", letterSpacing: ".12em", marginBottom: 4 }}>{n.title}</div>
-                      <div style={{ fontFamily: RJ, fontSize: 14, color: "#86efac", lineHeight: 1.4 }}>{n.text}</div>
+                <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+                  {macroLoading ? (
+                    <div style={{ ...card, padding: "32px 20px", display: "flex", flexDirection: "column", alignItems: "center", gap: 12 }}>
+                      <div style={{ width: 32, height: 32, border: "3px solid #1a3d22", borderTopColor: "#22c55e", borderRadius: "50%", animation: "spin 1s linear infinite" }} />
+                      <div style={{ fontFamily: JB, fontSize: 11, color: "#166534", letterSpacing: ".1em" }}>LOADING MACRO DATA...</div>
                     </div>
-                  ))}
+                  ) : macroData ? (
+                    <>
+                      {/* ECONOMIC CALENDAR */}
+                      <div style={{ ...card, overflow: "hidden" }}>
+                        <button onClick={() => setOpenMacro(p => ({ ...p, cal: !p.cal }))} style={{ width: "100%", display: "flex", justifyContent: "space-between", alignItems: "center", padding: "13px 18px", background: "transparent", border: "none", cursor: "pointer", borderBottom: openMacro.cal ? "1px solid #1a3d22" : "none" }}>
+                          <span style={{ fontFamily: JB, fontSize: 9, letterSpacing: ".2em", color: "#166534" }}>ECONOMIC CALENDAR</span>
+                          <span style={{ fontFamily: JB, fontSize: 10, color: "#166534", transform: openMacro.cal ? "rotate(180deg)" : "none", transition: ".2s", display: "inline-block" }}>▼</span>
+                        </button>
+                        {openMacro.cal && (
+                          <div style={{ padding: "12px 18px" }}>
+                            <div style={{ display: "grid", gridTemplateColumns: "60px 1fr 46px 46px 46px", gap: 4, marginBottom: 8, paddingBottom: 8, borderBottom: "1px solid #1a3d22" }}>
+                              {["DATE", "EVENT", "FCST", "PREV", "ACT"].map(h => (
+                                <div key={h} style={{ fontFamily: JB, fontSize: 8, color: "#166534", letterSpacing: ".08em" }}>{h}</div>
+                              ))}
+                            </div>
+                            {(macroData.calendar || []).map((e, i) => {
+                              const impClr = e.impact === "HIGH" ? "#f87171" : "#fb923c";
+                              return (
+                                <div key={i} style={{ display: "grid", gridTemplateColumns: "60px 1fr 46px 46px 46px", gap: 4, padding: "8px 0", borderBottom: i < macroData.calendar.length - 1 ? "1px solid #0d1a10" : "none", alignItems: "center" }}>
+                                  <div>
+                                    <div style={{ fontFamily: JB, fontSize: 11, color: "#db2777" }}>{e.date}</div>
+                                    <div style={{ fontFamily: JB, fontSize: 9, color: "#166534" }}>{e.day}</div>
+                                  </div>
+                                  <div>
+                                    <div style={{ fontFamily: RJ, fontSize: 12, color: "#86efac", lineHeight: 1.3 }}>{e.event}</div>
+                                    <div style={{ display: "inline-block", marginTop: 2, padding: "1px 5px", background: `${impClr}18`, border: `1px solid ${impClr}44`, borderRadius: 4 }}>
+                                      <span style={{ fontFamily: JB, fontSize: 8, color: impClr }}>{e.impact}</span>
+                                    </div>
+                                  </div>
+                                  <div style={{ fontFamily: JB, fontSize: 10, color: "#4ade80" }}>{e.forecast}</div>
+                                  <div style={{ fontFamily: JB, fontSize: 10, color: "#4b6a50" }}>{e.prev}</div>
+                                  <div style={{ fontFamily: JB, fontSize: 10, color: e.actual ? "#facc15" : "#1a3d22" }}>{e.actual || "—"}</div>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        )}
+                      </div>
+
+                      {/* FED WATCH */}
+                      <div style={{ ...card, overflow: "hidden" }}>
+                        <button onClick={() => setOpenMacro(p => ({ ...p, fed: !p.fed }))} style={{ width: "100%", display: "flex", justifyContent: "space-between", alignItems: "center", padding: "13px 18px", background: "transparent", border: "none", cursor: "pointer", borderBottom: openMacro.fed ? "1px solid #1a3d22" : "none" }}>
+                          <span style={{ fontFamily: JB, fontSize: 9, letterSpacing: ".2em", color: "#166534" }}>FED WATCH — RATE PROBABILITIES</span>
+                          <span style={{ fontFamily: JB, fontSize: 10, color: "#166534", transform: openMacro.fed ? "rotate(180deg)" : "none", transition: ".2s", display: "inline-block" }}>▼</span>
+                        </button>
+                        {openMacro.fed && macroData.fedWatch && (
+                          <div style={{ padding: "14px 18px" }}>
+                            <div style={{ fontFamily: RJ, fontSize: 13, color: "#86efac", marginBottom: 14, paddingBottom: 12, borderBottom: "1px solid #1a3d22" }}>
+                              Current Rate: <span style={{ color: "#facc15", fontFamily: JB }}>{macroData.fedWatch.currentRate}</span>
+                            </div>
+                            {macroData.fedWatch.meetings?.map((f, i) => (
+                              <div key={i} style={{ marginBottom: i < macroData.fedWatch.meetings.length - 1 ? 14 : 0 }}>
+                                <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 6 }}>
+                                  <span style={{ fontFamily: JB, fontSize: 12, color: "#db2777" }}>{f.date} FOMC</span>
+                                  <div style={{ display: "flex", gap: 10 }}>
+                                    <span style={{ fontFamily: JB, fontSize: 10, color: "#4ade80" }}>CUT {f.cut}%</span>
+                                    <span style={{ fontFamily: JB, fontSize: 10, color: "#facc15" }}>HOLD {f.hold}%</span>
+                                    <span style={{ fontFamily: JB, fontSize: 10, color: "#f87171" }}>HIKE {f.hike}%</span>
+                                  </div>
+                                </div>
+                                <div style={{ display: "flex", height: 6, borderRadius: 4, overflow: "hidden", gap: 1 }}>
+                                  <div style={{ width: `${f.cut}%`, background: "#4ade80", borderRadius: "4px 0 0 4px" }} />
+                                  <div style={{ width: `${f.hold}%`, background: "#facc15" }} />
+                                  <div style={{ width: `${f.hike}%`, background: "#f87171", borderRadius: "0 4px 4px 0" }} />
+                                </div>
+                              </div>
+                            ))}
+                            <div style={{ display: "flex", gap: 16, marginTop: 12, paddingTop: 10, borderTop: "1px solid #1a3d22" }}>
+                              {[["CUT", "#4ade80"], ["HOLD", "#facc15"], ["HIKE", "#f87171"]].map(([l, c]) => (
+                                <div key={l} style={{ display: "flex", alignItems: "center", gap: 5 }}>
+                                  <div style={{ width: 8, height: 8, borderRadius: 2, background: c }} />
+                                  <span style={{ fontFamily: JB, fontSize: 9, color: c, letterSpacing: ".06em" }}>{l}</span>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* SECTOR ROTATION */}
+                      <div style={{ ...card, overflow: "hidden" }}>
+                        <button onClick={() => setOpenMacro(p => ({ ...p, sec: !p.sec }))} style={{ width: "100%", display: "flex", justifyContent: "space-between", alignItems: "center", padding: "13px 18px", background: "transparent", border: "none", cursor: "pointer", borderBottom: openMacro.sec ? "1px solid #1a3d22" : "none" }}>
+                          <span style={{ fontFamily: JB, fontSize: 9, letterSpacing: ".2em", color: "#166534" }}>SECTOR ROTATION</span>
+                          <span style={{ fontFamily: JB, fontSize: 10, color: "#166534", transform: openMacro.sec ? "rotate(180deg)" : "none", transition: ".2s", display: "inline-block" }}>▼</span>
+                        </button>
+                        {openMacro.sec && (
+                          <div style={{ padding: "14px 18px" }}>
+                            <div style={{ fontFamily: JB, fontSize: 9, color: "#166534", letterSpacing: ".1em", marginBottom: 10 }}>TODAY'S PERFORMANCE</div>
+                            {(macroData.sectors || []).map((s, i) => {
+                              const isUp = s.change >= 0;
+                              const clr = isUp ? "#4ade80" : "#f87171";
+                              const barW = Math.min(Math.abs(s.change) / 3 * 100, 100);
+                              return (
+                                <div key={i} style={{ display: "flex", alignItems: "center", gap: 8, padding: "7px 0", borderBottom: i < macroData.sectors.length - 1 ? "1px solid #0d1a10" : "none" }}>
+                                  <div style={{ fontFamily: RJ, fontSize: 13, color: "#86efac", minWidth: 120 }}>{s.name}</div>
+                                  <div style={{ flex: 1, height: 4, background: "#0a140a", borderRadius: 2, overflow: "hidden" }}>
+                                    <div style={{ width: `${barW}%`, height: "100%", background: clr, borderRadius: 2 }} />
+                                  </div>
+                                  <div style={{ fontFamily: JB, fontSize: 11, color: clr, minWidth: 52, textAlign: "right" }}>
+                                    {isUp ? "+" : ""}{s.change?.toFixed(2)}%
+                                  </div>
+                                  <div style={{ fontFamily: JB, fontSize: 9, color: clr, letterSpacing: ".06em", minWidth: 28 }}>
+                                    {s.flow}
+                                  </div>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        )}
+                      </div>
+                    </>
+                  ) : (
+                    <div style={{ ...card, padding: "32px 20px", textAlign: "center" }}>
+                      <div style={{ fontFamily: JB, fontSize: 11, color: "#166534" }}>UNABLE TO LOAD MACRO DATA</div>
+                    </div>
+                  )}
                 </div>
               )}
               {tab === "Sentiment" && (
@@ -688,9 +836,117 @@ export default function Home() {
             </>
           )}
 
+          {/* FLOW TAB — for ETF indices */}
+          {!isIndex && tab === "Flow" && (
+            <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+              {flowLoading ? (
+                <div style={{ ...card, padding: "32px 20px", display: "flex", flexDirection: "column", alignItems: "center", gap: 12 }}>
+                  <div style={{ width: 32, height: 32, border: "3px solid #1a3d22", borderTopColor: "#22c55e", borderRadius: "50%", animation: "spin 1s linear infinite" }} />
+                  <div style={{ fontFamily: JB, fontSize: 11, color: "#166534", letterSpacing: ".1em" }}>ANALYZING VOLUME FLOW...</div>
+                </div>
+              ) : flowData ? (() => {
+                const fd = flowData;
+                const smClr = fd.smartMoney === "BUYING" ? "#4ade80" : "#db2777";
+                const maxV = fd.bars?.length ? Math.max(...fd.bars.map(b => b.v)) : 1;
+                return (
+                  <>
+                    {/* Volume chart */}
+                    <div style={{ ...card, padding: "16px 18px" }}>
+                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
+                        <div style={{ fontFamily: JB, fontSize: 9, letterSpacing: ".2em", color: "#166534" }}>INTRADAY VOLUME</div>
+                        <div style={{ display: "flex", gap: 10 }}>
+                          {[["UP","#4ade80"],["DOWN","#db2777"]].map(([l,c]) => (
+                            <div key={l} style={{ display: "flex", alignItems: "center", gap: 4 }}>
+                              <div style={{ width: 8, height: 8, borderRadius: 2, background: c }} />
+                              <span style={{ fontFamily: JB, fontSize: 9, color: c }}>{l}</span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                      <div style={{ background: "#080d0a", borderRadius: 8, padding: "8px 4px 4px" }}>
+                        <div style={{ display: "flex", alignItems: "flex-end", gap: 2, height: 72 }}>
+                          {(fd.bars || []).map((b, i) => (
+                            <div key={i} style={{ flex: 1, display: "flex", flexDirection: "column", justifyContent: "flex-end" }}>
+                              <div style={{ width: "100%", height: `${(b.v / maxV) * 68}px`, background: b.up ? "#4ade80" : "#db2777", borderRadius: "2px 2px 0 0", opacity: 0.85 }} />
+                            </div>
+                          ))}
+                        </div>
+                        <div style={{ display: "flex", justifyContent: "space-between", marginTop: 5, padding: "0 2px" }}>
+                          <span style={{ fontFamily: JB, fontSize: 9, color: "#166534" }}>OPEN</span>
+                          <span style={{ fontFamily: JB, fontSize: 9, color: "#166534" }}>MID</span>
+                          <span style={{ fontFamily: JB, fontSize: 9, color: "#166534" }}>CLOSE</span>
+                        </div>
+                      </div>
+                      <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 8, marginTop: 12 }}>
+                        {[
+                          { label: "TODAY VOL", val: `${fd.todayVol}M`, clr: "#facc15" },
+                          { label: "vs AVG",    val: `${fd.volRatio}x`, clr: "#facc15" },
+                          { label: "NET OBV",   val: `${fd.obvM >= 0 ? "+" : ""}${fd.obvM}M`, clr: fd.obvM >= 0 ? "#4ade80" : "#db2777" },
+                        ].map(({ label, val, clr }) => (
+                          <div key={label} style={{ background: "#080d0a", border: "1px solid #1a3d22", borderRadius: 8, padding: "8px 6px", textAlign: "center" }}>
+                            <div style={{ fontFamily: JB, fontSize: 8, color: "#166534", letterSpacing: ".08em", marginBottom: 4 }}>{label}</div>
+                            <div style={{ fontFamily: JB, fontSize: 13, color: clr, fontWeight: 600 }}>{val}</div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Analysis */}
+                    {fd.analysis && (
+                      <div style={{ ...card, padding: "16px 18px", position: "relative", overflow: "hidden" }}>
+                        <div style={{ position: "absolute", inset: 0, background: `radial-gradient(ellipse 60% 40% at 50% 0%, ${smClr}0d 0%, transparent 70%)`, pointerEvents: "none" }} />
+                        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 14, paddingBottom: 12, borderBottom: "1px solid #1a3d22" }}>
+                          <div>
+                            <div style={{ fontFamily: JB, fontSize: 9, color: "#166534", letterSpacing: ".15em", marginBottom: 4 }}>SMART MONEY</div>
+                            <div style={{ fontFamily: RJ, fontSize: 26, fontWeight: 700, color: smClr }}>{fd.smartMoney}</div>
+                          </div>
+                          <div style={{ textAlign: "right" }}>
+                            <div style={{ fontFamily: JB, fontSize: 9, color: "#166534", letterSpacing: ".1em", marginBottom: 4 }}>CONCLUSION</div>
+                            <div style={{ fontFamily: JB, fontSize: 11, color: smClr, maxWidth: 150, lineHeight: 1.4, textAlign: "right" }}>{fd.analysis.conclusion}</div>
+                          </div>
+                        </div>
+                        {(fd.analysis.signals || []).map((s, i) => {
+                          const clr = s.bullish ? "#4ade80" : "#db2777";
+                          return (
+                            <div key={i} style={{ display: "flex", alignItems: "center", gap: 10, padding: "9px 0", borderBottom: i < fd.analysis.signals.length - 1 ? "1px solid #0d1a10" : "none" }}>
+                              <div style={{ width: 6, height: 6, borderRadius: "50%", background: clr, flexShrink: 0, boxShadow: `0 0 5px ${clr}88` }} />
+                              <div style={{ fontFamily: JB, fontSize: 11, color: "#4ade80", minWidth: 85, letterSpacing: ".04em" }}>{s.label}</div>
+                              <div style={{ fontFamily: JB, fontSize: 12, color: clr, fontWeight: 600, minWidth: 70 }}>{s.value}</div>
+                              <div style={{ fontFamily: JB, fontSize: 9, color: "#166534", flex: 1 }}>{s.note}</div>
+                            </div>
+                          );
+                        })}
+                        <div style={{ marginTop: 14, paddingTop: 12, borderTop: "1px solid #1a3d22" }}>
+                          <div style={{ fontFamily: RJ, fontSize: 13, color: "#86efac", lineHeight: 1.7 }}>{fd.analysis.detail}</div>
+                        </div>
+                      </div>
+                    )}
+                  </>
+                );
+              })() : (
+                <div style={{ ...card, padding: "32px 20px", textAlign: "center" }}>
+                  <div style={{ fontFamily: JB, fontSize: 11, color: "#166534" }}>UNABLE TO LOAD FLOW DATA</div>
+                </div>
+              )}
+            </div>
+          )}
+
           {/* NEWS TAB — for individual stocks */}
           {!isIndex && tab === "News" && (
             <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+              {/* Earnings countdown */}
+              {newsData?.nextEarnings && (
+                <div style={{ ...card, padding: "14px 18px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                  <div>
+                    <div style={{ fontFamily: JB, fontSize: 9, color: "#166534", letterSpacing: ".15em", marginBottom: 4 }}>NEXT EARNINGS</div>
+                    <div style={{ fontFamily: JB, fontSize: 16, color: "#facc15", fontWeight: 600 }}>{newsData.nextEarnings.date}</div>
+                  </div>
+                  <div style={{ textAlign: "right" }}>
+                    <div style={{ fontFamily: JB, fontSize: 28, color: "#facc15", fontWeight: 700 }}>{newsData.nextEarnings.daysUntil}d</div>
+                    <div style={{ fontFamily: JB, fontSize: 9, color: "#166534" }}>UNTIL REPORT</div>
+                  </div>
+                </div>
+              )}
               {newsLoading ? (
                 <div style={{ ...card, padding: "32px 20px", display: "flex", flexDirection: "column", alignItems: "center", gap: 12 }}>
                   <div style={{ width: 32, height: 32, border: "3px solid #1a3d22", borderTopColor: "#22c55e", borderRadius: "50%", animation: "spin 1s linear infinite" }} />
