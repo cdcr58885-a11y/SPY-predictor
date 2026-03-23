@@ -29,15 +29,18 @@ export default async function handler(req, res) {
     const S1  = parseFloat((2*PP-prevH).toFixed(2));
     const S2  = parseFloat((PP-rng).toFixed(2));
     const S3  = parseFloat((prevL-2*(prevH-PP)).toFixed(2));
-    // Traditional Fibonacci Retracement (based on prevH to prevL)
+    // Fibonacci Retracement based on 52-week High/Low
+    const high52 = parseFloat(Math.max(...highs.slice(-252)).toFixed(2));
+    const low52  = parseFloat(Math.min(...lows.slice(-252)).toFixed(2));
+    const fibRange = high52 - low52;
     const fibLevels = [
-      { label: "100%", val: prevH,                                          type: "resistance" },
-      { label: "78.6%", val: parseFloat((prevL + 0.786*rng).toFixed(2)),   type: "resistance" },
-      { label: "61.8%", val: parseFloat((prevL + 0.618*rng).toFixed(2)),   type: "resistance" },
-      { label: "50.0%", val: parseFloat((prevL + 0.500*rng).toFixed(2)),   type: "pivot" },
-      { label: "38.2%", val: parseFloat((prevL + 0.382*rng).toFixed(2)),   type: "support" },
-      { label: "23.6%", val: parseFloat((prevL + 0.236*rng).toFixed(2)),   type: "support" },
-      { label: "0%",    val: prevL,                                          type: "support" },
+      { label: "100%",  val: high52,                                              type: "resistance" },
+      { label: "78.6%", val: parseFloat((low52 + 0.786*fibRange).toFixed(2)),    type: "resistance" },
+      { label: "61.8%", val: parseFloat((low52 + 0.618*fibRange).toFixed(2)),    type: "resistance" },
+      { label: "50.0%", val: parseFloat((low52 + 0.500*fibRange).toFixed(2)),    type: "pivot" },
+      { label: "38.2%", val: parseFloat((low52 + 0.382*fibRange).toFixed(2)),    type: "support" },
+      { label: "23.6%", val: parseFloat((low52 + 0.236*fibRange).toFixed(2)),    type: "support" },
+      { label: "0%",    val: low52,                                               type: "support" },
     ].sort((a,b) => b.val - a.val);
     // Technical indicators
     const sma20  = parseFloat((closes.slice(-20).reduce((a,b)=>a+b,0)/20).toFixed(2));
@@ -85,9 +88,11 @@ Respond ONLY with JSON, no markdown:
     const fibPivots = fibLevels;
     return res.status(200).json({
       ticker, price, prevH, prevL, prevC, pp: PP,
+      high52: parseFloat(Math.max(...highs.slice(-252)).toFixed(2)),
+      low52:  parseFloat(Math.min(...lows.slice(-252)).toFixed(2)),
       technical: aiData,
       stdPivots,
-      fibPivots,
+      fibPivots: fibLevels,
       fetchedAt: new Date().toISOString(),
     });
   } catch(err) {

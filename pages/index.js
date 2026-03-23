@@ -827,7 +827,15 @@ export default function Home() {
                     </button>
                     {openSec.fib && (
                       <div style={{ padding:"14px 18px" }}>
-                        <PrevBar />
+                        {/* 52W High/Low bar */}
+                        <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:6, marginBottom:12 }}>
+                          {[["52W HIGH", ld.high52, "#f87171"], ["52W LOW", ld.low52, "#4ade80"]].map(([l,v,c]) => (
+                            <div key={l} style={{ background:"#080d0a", border:"1px solid #1a3d22", borderRadius:8, padding:"7px 8px", textAlign:"center" }}>
+                              <div style={{ fontFamily:JB, fontSize:8, color:"#166534", letterSpacing:".06em", marginBottom:3 }}>{l}</div>
+                              <div style={{ fontFamily:JB, fontSize:13, color:c, fontWeight:600 }}>{v}</div>
+                            </div>
+                          ))}
+                        </div>
                         {ld.fibPivots.map((l,i) => {
                           const showNow = i > 0 && ld.fibPivots[i-1].val > cp && l.val <= cp;
                           return <div key={i}>{showNow && <NowLine />}<PRow {...l} last={i===ld.fibPivots.length-1} /></div>;
