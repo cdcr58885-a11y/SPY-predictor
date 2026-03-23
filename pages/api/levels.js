@@ -4,7 +4,7 @@ export default async function handler(req, res) {
   if (req.method !== "GET") return res.status(405).json({ error: "Method not allowed" });
   const ticker = (req.query.ticker || "SPY").toUpperCase().trim();
   try {
-    const symbol = ticker === "SPX" ? "%5EGSPC" : ticker === "NDX" ? "%5EIXIC" : ticker;
+    const symbol = ticker === "SPX" ? "%5EGSPC" : ticker === "NDX" ? "%5ENDX" : ticker;
     const url = `https://query1.finance.yahoo.com/v8/finance/chart/${symbol}?range=1y&interval=1d&includePrePost=false`;
     const r = await fetch(url, { headers: { "User-Agent": "Mozilla/5.0", "Accept": "application/json" } });
     if (!r.ok) throw new Error(`Yahoo error: ${r.status}`);
