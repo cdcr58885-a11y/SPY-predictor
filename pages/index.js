@@ -185,18 +185,20 @@ export default function Home() {
   const [newsLoading, setNewsLoading] = useState(false);
   const [levelsLoading, setLevelsLoading] = useState(false);
 
-  const isIndex = ["SPX", "SPY"].includes(ticker);
+  const isIndex = ["SPX", "SPY", "NDX"].includes(ticker);
+  const showLevels = true; // All tickers show levels
 
-  // Load news and levels when switching to a stock
+  // Load news and levels when switching ticker
   useEffect(() => {
-    if (isIndex) return;
     setNewsData(null);
     setLevelsData(null);
-    setNewsLoading(true);
+    if (!isIndex) {
+      setNewsLoading(true);
+      fetch(`/api/news?ticker=${ticker}`)
+        .then(r => r.json()).then(d => setNewsData(d)).catch(() => {})
+        .finally(() => setNewsLoading(false));
+    }
     setLevelsLoading(true);
-    fetch(`/api/news?ticker=${ticker}`)
-      .then(r => r.json()).then(d => setNewsData(d)).catch(() => {})
-      .finally(() => setNewsLoading(false));
     fetch(`/api/levels?ticker=${ticker}`)
       .then(r => r.json()).then(d => setLevelsData(d)).catch(() => {})
       .finally(() => setLevelsLoading(false));
@@ -351,7 +353,7 @@ export default function Home() {
             {showStocks && (
               <div style={{ marginTop: 8, borderTop: "1px solid #1a3d22", paddingTop: 12, display: "flex", flexDirection: "column", gap: 12 }}>
                 {[
-                  { group: "INDEX",     items: ["SPY","QQQ","DIA","IWM"] },
+                  { group: "INDEX",     items: ["SPX","NDX","SPY","QQQ","DIA","IWM"] },
                   { group: "MAG 7",     items: ["AAPL","MSFT","NVDA","AMZN","GOOGL","META","TSLA"] },
                   { group: "SEMIS",     items: ["AMD","AVGO","TSM","QCOM","MU","INTC","AMAT","LRCX","ASML","KLAC","WDC","SNDK"] },
                   { group: "FINANCE",   items: ["JPM","GS","MS","BAC","BRK.B","V","MA","HOOD"] },
@@ -421,12 +423,12 @@ export default function Home() {
 
           {/* TABS */}
           {isIndex ? (
-            <div style={{ ...card, padding: 5, display: "grid", gridTemplateColumns: "repeat(5,1fr)", gap: 4 }}>
-              {["Prediction", "Signals", "Macro", "Sentiment", "Compass"].map(t => (
+            <div style={{ ...card, padding: 5, display: "grid", gridTemplateColumns: "repeat(6,1fr)", gap: 4 }}>
+              {["Prediction", "Signals", "Macro", "Sentiment", "Levels", "Compass"].map(t => (
                 <button key={t} onClick={() => setTab(t)} style={{
                   padding: "9px 0", border: "none", borderRadius: 12, cursor: "pointer",
                   fontFamily: t === "Compass" ? JB : RJ,
-                  fontSize: t === "Compass" ? 12 : 15,
+                  fontSize: t === "Compass" ? 12 : t === "Levels" ? 13 : 15,
                   fontWeight: 600, letterSpacing: ".04em", transition: "all .18s",
                   background: tab === t ? "#052e16" : "transparent",
                   color: tab === t ? "#4ade80" : "#166534",
@@ -818,7 +820,7 @@ export default function Home() {
 
                     {/* FIBONACCI */}
                     <button onClick={() => toggle("fib")} style={{ width:"100%", display:"flex", justifyContent:"space-between", alignItems:"center", padding:"13px 18px", background:"transparent", border:"none", cursor:"pointer", borderBottom: openSec.fib?"1px solid #1a3d22":"none" }}>
-                      <span style={{ fontFamily:JB, fontSize:9, letterSpacing:".2em", color:"#166534" }}>FIBONACCI PIVOTS</span>
+                      <span style={{ fontFamily:JB, fontSize:9, letterSpacing:".2em", color:"#166534" }}>FIBONACCI RETRACEMENT</span>
                       <span style={{ fontFamily:JB, fontSize:10, color:"#166534", transform: openSec.fib?"rotate(180deg)":"none", transition:".2s", display:"inline-block" }}>▼</span>
                     </button>
                     {openSec.fib && (
@@ -841,8 +843,8 @@ export default function Home() {
             </div>
           )}
 
-          {/* BOTTOM METRICS — only for SPX/SPY */}
-          {isIndex && (
+          {/* BOTTOM METRICS — only for SPX */}
+          {ticker === "SPX" && (
             <>
               <div style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: 10 }}>
                 {[
