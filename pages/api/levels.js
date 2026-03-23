@@ -5,7 +5,7 @@ export default async function handler(req, res) {
   const ticker = (req.query.ticker || "SPY").toUpperCase().trim();
   try {
     const symbol = ticker === "SPX" ? "%5EGSPC" : ticker === "NDX" ? "%5EIXIC" : ticker;
-    const url = `https://query1.finance.yahoo.com/v8/finance/chart/${symbol}?range=3mo&interval=1d&includePrePost=false`;
+    const url = `https://query1.finance.yahoo.com/v8/finance/chart/${symbol}?range=1y&interval=1d&includePrePost=false`;
     const r = await fetch(url, { headers: { "User-Agent": "Mozilla/5.0", "Accept": "application/json" } });
     if (!r.ok) throw new Error(`Yahoo error: ${r.status}`);
     const data = await r.json();
