@@ -10,7 +10,7 @@ const LANG = {
   en: {
     predictor: "DAILY PREDICTOR",
     tabs: { Prediction:"Prediction", Signals:"Signals", Macro:"Macro", Sentiment:"Sentiment", Levels:"Levels", News:"News", Flow:"Flow" },
-    nextForecast: "{t.nextForecast}",
+    nextForecast: "NEXT SESSION FORECAST",
     targetRange: "TARGET RANGE",
     expectedMove: "EXPECTED MOVE",
     technicalSignals: "TECHNICAL SIGNALS",
@@ -18,7 +18,7 @@ const LANG = {
     marketSentiment: "MARKET SENTIMENT",
     vix: "VIX", yield: "10Y YIELD", brent: "BRENT", rsi: "RSI",
     treasury: "treasury", oversold: "oversold", overbought: "overbought", neutral: "neutral",
-    refresh: {t.refresh}, retry: {t.retry},
+    refresh: "REFRESH PREDICTION", retry: "RETRY",
     cached: "CACHED", live: "LIVE", updated: "UPDATED",
     loading: "FETCHING REAL MARKET DATA", aiAnalysis: "AI ANALYSIS",
     technicalAnalysis: "TECHNICAL ANALYSIS", pivotPoints: "PIVOT POINTS", fibonacci: "FIBONACCI RETRACEMENT",
